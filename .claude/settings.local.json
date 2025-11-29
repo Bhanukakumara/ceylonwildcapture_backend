@@ -6,7 +6,11 @@
       "Bash(then cat NUL)",
       "Bash(else echo \"File NUL not found or is special\")",
       "Bash(fi)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(./mvnw clean compile:*)",
+      "Bash(./mvnw test-compile:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(./mvnw spring-boot:run:*)"
     ],
     "deny": [],
     "ask": []
