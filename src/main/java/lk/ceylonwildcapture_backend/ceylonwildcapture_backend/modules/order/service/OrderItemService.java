@@ -1,6 +1,10 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
+import jakarta.validation.Valid;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.AddItemToOrderRequestDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderItemResponseDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.OrderItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -263,4 +267,16 @@ public interface OrderItemService {
      * @return count of sales
      */
     long countSalesByPhotographer(Long photographerId);
+
+    OrderResponseDto addToOrder(@Valid AddItemToOrderRequestDto requestDto, Long userId);
+
+    OrderResponseDto removeFromOrder(Long orderItemId, Long userId);
+
+    OrderItemResponseDto getOrderItemDto(Long orderItemId, Long userId);
+
+    List<OrderItemResponseDto> getItemsByOrder(Long orderId, Long userId);
+
+    List<OrderItemResponseDto> getItemsByPhoto(Long photoId);
+
+    int countItemsByOrder(Long orderId, Long userId);
 }

@@ -259,7 +259,16 @@ Authorization: Bearer {access_token}
 ```
 
 ### 4. Update User Profile (Partial)
-**Endpoint:** `PUT /api/v1/users/{id}/profile`
+**Endpoint:** `PUT /api/v1/users/{id}/{
+  "firstName": "John Updated",
+  "lastName": "Doe Updated",
+  "phoneNumber": "+94779876543",
+  "email": "john.updated@example.com",
+  "profileImageUrl": "https://example.com/new-profile.jpg",
+  "role": "PHOTOGRAPHER",
+  "isActive": true,
+  "emailVerified": true
+}`
 
 **Request Body:**
 ```json
