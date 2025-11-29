@@ -10,6 +10,6 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration-ms: 3600000          # 1 hour
-  refresh-expiration-ms: 604800000 # 7 days
+  expiration: ${JWT_EXPIRATION}          # 1 hour in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION} # 7 days in milliseconds
 

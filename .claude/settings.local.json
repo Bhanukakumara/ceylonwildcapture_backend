@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(if [ -f \"NUL\" ])",
+      "Bash(then cat NUL)",
+      "Bash(else echo \"File NUL not found or is special\")",
+      "Bash(fi)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
