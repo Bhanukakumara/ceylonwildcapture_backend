@@ -50,7 +50,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/v1/categories/**").permitAll()
-                        
+                        .requestMatchers("/api/v1/tags/**").permitAll()
+
                         // Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         

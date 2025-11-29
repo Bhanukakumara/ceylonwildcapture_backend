@@ -48,4 +48,8 @@ public class Tag {
     @JsonIgnore
     @Builder.Default
     private List<Photo> photos = new ArrayList<>();
+
+    @CreationTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
