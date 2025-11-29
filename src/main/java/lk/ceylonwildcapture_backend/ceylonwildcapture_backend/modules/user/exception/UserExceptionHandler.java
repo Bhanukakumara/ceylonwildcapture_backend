@@ -160,6 +160,35 @@ public class UserExceptionHandler {
     }
 
     /**
+     * Handle JSON parsing errors (HttpMessageNotReadableException)
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDto> handleHttpMessageNotReadableException(
+            org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest request) {
+        log.error("Invalid JSON format: {}", ex.getMessage());
+
+        String message = "Invalid request body format";
+        if (ex.getCause() != null) {
+            String causeMessage = ex.getCause().getMessage();
+            if (causeMessage != null && causeMessage.contains("Cannot map `null` into type")) {
+                message = "Invalid request: required fields cannot be null";
+            } else if (causeMessage != null) {
+                message = "Invalid JSON format: " + causeMessage.split("\n")[0];
+            }
+        }
+
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(BAD_REQUEST)
+                .message(message)
+                .path(request.getDescription(false).replace(URI_PREFIX, ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Handle validation errors (Bean Validation)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -222,6 +251,39 @@ public class UserExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handle MethodArgumentTypeMismatchException (e.g., invalid enum values)
+     */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDto> handleMethodArgumentTypeMismatchException(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex, WebRequest request) {
+        log.error("Method argument type mismatch: {}", ex.getMessage());
+
+        String message = String.format("Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName());
+
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            Object[] enumConstants = ex.getRequiredType().getEnumConstants();
+            if (enumConstants != null && enumConstants.length > 0) {
+                String validValues = String.join(", ",
+                    java.util.Arrays.stream(enumConstants)
+                        .map(Object::toString)
+                        .toArray(String[]::new));
+                message = String.format("Invalid value '%s' for parameter '%s'. Valid values are: %s",
+                    ex.getValue(), ex.getName(), validValues);
+            }
+        }
+
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(BAD_REQUEST)
+                .message(message)
+                .path(request.getDescription(false).replace(URI_PREFIX, ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**

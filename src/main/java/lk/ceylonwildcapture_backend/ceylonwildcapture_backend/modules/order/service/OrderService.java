@@ -1,6 +1,8 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
+import jakarta.validation.Valid;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.OrderStatus;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.*;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -349,4 +351,32 @@ public interface OrderService {
      * @throws IllegalArgumentException if order not found
      */
     Order processOrderPayment(Long orderId, Object paymentDetails);
+
+    OrderResponseDto createOrderFromRequest(@Valid CreateOrderRequestDto requestDto, Long userId);
+
+    OrderResponseDto getOrderDtoById(Long orderId, Long userId);
+
+    OrderResponseDto getOrderDtoByNumber(String orderNumber, Long userId);
+
+    Page<OrderSummaryDto> getUserOrders(Long userId, Pageable pageable);
+
+    Page<OrderResponseDto> getUserOrdersByStatus(Long userId, OrderStatus status, Pageable pageable);
+
+    Page<OrderResponseDto> getUserCompletedOrders(Long userId, Pageable pageable);
+
+    OrderResponseDto updateStatus(Long orderId, @Valid UpdateOrderStatusRequestDto statusDto);
+
+    OrderResponseDto cancel(Long orderId, Long userId);
+
+    OrderResponseDto handlePaymentSuccess(Long orderId, String paymentId, String transactionId);
+
+    OrderResponseDto handlePaymentFailure(Long orderId, String reason);
+
+    Page<OrderResponseDto> searchOrders(OrderSearchCriteria criteria, Pageable pageable);
+
+    Page<OrderResponseDto> getUserOrdersByDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    long countUserOrders(Long userId);
+
+    boolean validateForPayment(Long orderId, Long userId);
 }
