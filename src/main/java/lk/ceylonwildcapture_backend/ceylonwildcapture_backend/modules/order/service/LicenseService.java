@@ -1,6 +1,12 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseResponseDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseSearchCriteria;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseVerificationResultDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.PhotoPurchaseCheckDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.License;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -322,4 +328,28 @@ public interface LicenseService {
      * @return page of licenses
      */
     Page<License> getLicensesByBuyerAndLicenseType(Long buyerId, LicenseType licenseType, Pageable pageable);
+
+    LicenseResponseDto getLicenseDto(Long licenseId, Long userId);
+
+    LicenseResponseDto getLicenseDtoByKey(String licenseKey, Long userId);
+
+    Page<LicenseResponseDto> getUserLicenses(Long userId, Pageable pageable);
+
+    Page<LicenseResponseDto> getUserActiveLicenses(Long userId, Pageable pageable);
+
+    List<LicenseResponseDto> getUserLicensesForPhoto(Long userId, Long photoId);
+
+    LicenseVerificationResultDto verifyLicenseOwnership(@NotBlank(message = "License key is required") String licenseKey, @NotNull(message = "Photo ID is required") Long photoId, Long userId);
+
+    LicenseVerificationResultDto validateForDownload(String licenseKey, Long photoId, Long userId);
+
+    PhotoPurchaseCheckDto checkPhotoPurchase(Long userId, Long photoId);
+
+    Page<LicenseResponseDto> searchLicenses(LicenseSearchCriteria criteria, Pageable pageable);
+
+    long countUserLicenses(Long userId);
+
+    LicenseResponseDto deactivate(Long licenseId);
+
+    LicenseResponseDto activate(Long licenseId);
 }
