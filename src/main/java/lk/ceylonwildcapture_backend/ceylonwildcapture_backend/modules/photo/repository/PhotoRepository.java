@@ -329,18 +329,32 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
      * @param pageable pagination information
      * @return page of matching photos
      */
-    @Query("SELECT DISTINCT p FROM Photo p " +
-           "LEFT JOIN p.categories c " +
-           "LEFT JOIN p.tags t " +
-           "WHERE p.isApproved = true AND p.isActive = true " +
-           "AND (:searchTerm IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "     OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
-           "AND (:categoryIds IS NULL OR c.id IN :categoryIds) " +
-           "AND (:tagNames IS NULL OR LOWER(t.name) IN :tagNames) " +
-           "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) " +
-           "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice) " +
-           "AND (:location IS NULL OR LOWER(p.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
-           "AND (:photographerId IS NULL OR p.photographer.id = :photographerId)")
+    @Query("""
+        SELECT DISTINCT p FROM Photo p
+        LEFT JOIN p.categories c
+        LEFT JOIN p.tags t
+        WHERE (:isApproved IS NULL OR p.isApproved = :isApproved)
+          AND (:isActive IS NULL OR p.isActive = :isActive)
+          AND (
+                :searchTerm IS NULL
+                OR LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+              )
+          AND (
+                :categoryIds IS NULL 
+                OR c.id IS NULL 
+                OR c.id IN :categoryIds
+              )
+          AND (
+                :tagNames IS NULL 
+                OR t.name IS NULL
+                OR LOWER(t.name) IN :tagNames
+              )
+          AND (:minPrice IS NULL OR p.basePrice >= :minPrice)
+          AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice)
+          AND (:location IS NULL OR LOWER(p.location) LIKE LOWER(CONCAT('%', :location, '%')))
+          AND (:photographerId IS NULL OR p.photographer.id = :photographerId)
+    """)
     Page<Photo> advancedSearch(
             @Param("searchTerm") String searchTerm,
             @Param("categoryIds") List<Long> categoryIds,
@@ -349,6 +363,8 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("location") String location,
             @Param("photographerId") Long photographerId,
+            @Param("isApproved") Boolean isApproved,
+            @Param("isActive") Boolean isActive,
             Pageable pageable
     );
 }

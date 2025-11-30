@@ -41,8 +41,7 @@ public class Photo {
     @Size(max = 2000)
     private String description;
 
-    @NotBlank(message = "Image URL is required")
-    @Column(name = "image_url", nullable = false)
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Column(name = "thumbnail_url")

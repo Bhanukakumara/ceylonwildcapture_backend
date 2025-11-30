@@ -1,16 +1,17 @@
 # Photo Module Testing Guide
 
-This guide provides comprehensive testing instructions for the Photo Category Module in the Ceylon Wild Capture backend.
+This guide provides comprehensive testing instructions for the Photo Management Module in the Ceylon Wild Capture backend.
 
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
-2. [Category Management Endpoints](#category-management-endpoints)
-3. [Tag Management Endpoints](#tag-management-endpoints)
-4. [Testing with Postman](#testing-with-postman)
-5. [Testing with curl](#testing-with-curl)
-6. [Common Test Scenarios](#common-test-scenarios)
-7. [Troubleshooting](#troubleshooting)
+2. [Photo Management Endpoints](#photo-management-endpoints)
+3. [Category Management Endpoints](#category-management-endpoints)
+4. [Tag Management Endpoints](#tag-management-endpoints)
+5. [Testing with Postman](#testing-with-postman)
+6. [Testing with curl](#testing-with-curl)
+7. [Common Test Scenarios](#common-test-scenarios)
+8. [Troubleshooting](#troubleshooting)
 
 ## 🚀 Prerequisites
 
@@ -38,6 +39,797 @@ mvn spring-boot:run
 ```
 
 The application will start on `http://localhost:8080`
+
+## 📷 Photo Management Endpoints
+
+### 1. Upload Photo
+**Endpoint:** `POST /api/v1/photos/upload`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
+```
+
+**Request (Multipart Form Data):**
+- **file** (file, required): The photo file to upload
+- **data** (JSON, required): Photo metadata
+
+**Photo Data JSON:**
+```json
+{
+  "title": "Sri Lankan Leopard in Yala",
+  "description": "A magnificent leopard spotted in Yala National Park",
+  "photographerId": 1,
+  "basePrice": 50.00,
+  "commercialPrice": 150.00,
+  "editorialPrice": 100.00,
+  "extendedPrice": 250.00,
+  "location": "Yala National Park, Sri Lanka",
+  "tagIds": [1, 2, 3],
+  "categoryIds": [1, 2],
+  "cameraModel": "Canon EOS R5",
+  "lens": "RF 100-500mm f/4.5-7.1L IS USM",
+  "focalLength": "400mm",
+  "aperture": "f/5.6",
+  "shutterSpeed": "1/1000",
+  "iso": "800",
+  "captureDate": "2024-11-30T08:30:00"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "title": "Sri Lankan Leopard in Yala",
+  "description": "A magnificent leopard spotted in Yala National Park",
+  "imageUrl": "photos/photo-123456789.jpg",
+  "thumbnailUrl": null,
+  "watermarkedUrl": null,
+  "photographerId": 1,
+  "photographerName": "John Doe",
+  "fileSize": null,
+  "width": null,
+  "height": null,
+  "format": null,
+  "basePrice": 50.00,
+  "commercialPrice": 150.00,
+  "editorialPrice": 100.00,
+  "extendedPrice": 250.00,
+  "isApproved": false,
+  "isFeatured": false,
+  "isActive": true,
+  "viewCount": 0,
+  "downloadCount": 0,
+  "likeCount": 0,
+  "location": "Yala National Park, Sri Lanka",
+  "cameraModel": "Canon EOS R5",
+  "lens": "RF 100-500mm f/4.5-7.1L IS USM",
+  "focalLength": "400mm",
+  "aperture": "f/5.6",
+  "shutterSpeed": "1/1000",
+  "iso": "800",
+  "captureDate": "2024-11-30T08:30:00",
+  "createdAt": "2024-11-30T10:00:00",
+  "updatedAt": "2024-11-30T10:00:00",
+  "tags": [...],
+  "categories": [...]
+}
+```
+
+**Notes:**
+- File must be a valid image format (JPG, PNG, etc.)
+- Photo is created with `isApproved=false` and requires admin approval
+- If FileStorageService is not available, a placeholder URL will be used
+
+### 2. Create Photo (Without File Upload)
+**Endpoint:** `POST /api/v1/photos`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "Elephant Herd",
+  "description": "Family of elephants crossing the road",
+  "photographerId": 1,
+  "basePrice": 40.00,
+  "location": "Udawalawe National Park",
+  "tagIds": [2, 5],
+  "categoryIds": [1]
+}
+```
+
+**Response:** Same as Upload Photo response
+
+**Notes:**
+- Use this endpoint to create photo records without uploading files
+- Useful for batch imports or when files are already stored
+
+### 3. Update Photo
+**Endpoint:** `PUT /api/v1/photos/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "Updated Title",
+  "description": "Updated description",
+  "basePrice": 60.00,
+  "commercialPrice": 180.00,
+  "location": "Updated Location",
+  "tagIds": [1, 2, 3, 4],
+  "categoryIds": [1, 2],
+  "isActive": true,
+  "isFeatured": false
+}
+```
+
+**Response:** Updated photo response DTO
+
+**Notes:**
+- All fields are optional
+- Only provided fields will be updated
+
+### 4. Update Photo Metadata
+**Endpoint:** `PATCH /api/v1/photos/{id}/metadata`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "title": "New Title",
+  "description": "New description",
+  "location": "New Location"
+}
+```
+
+**Response:** Updated photo response DTO
+
+### 5. Update Photo Pricing
+**Endpoint:** `PATCH /api/v1/photos/{id}/pricing`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "basePrice": 55.00,
+  "commercialPrice": 165.00,
+  "editorialPrice": 110.00,
+  "extendedPrice": 275.00
+}
+```
+
+**Response:** Updated photo response DTO
+
+### 6. Update Photo EXIF Data
+**Endpoint:** `PATCH /api/v1/photos/{id}/exif`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "cameraModel": "Sony A7R V",
+  "lens": "FE 200-600mm F5.6-6.3 G OSS",
+  "focalLength": "600mm",
+  "aperture": "f/6.3",
+  "shutterSpeed": "1/2000",
+  "iso": "1600",
+  "captureDate": "2024-11-30T14:30:00"
+}
+```
+
+**Response:** Updated photo response DTO
+
+### 7. Get Photo by ID
+**Endpoint:** `GET /api/v1/photos/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photo response DTO with all details
+
+### 8. Get Photo with Photographer Details
+**Endpoint:** `GET /api/v1/photos/{id}/with-photographer`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photo response DTO with photographer information eagerly loaded
+
+### 9. Get All Photos (Paginated)
+**Endpoint:** `GET /api/v1/photos?page=0&size=20&sort=createdAt,desc`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+{
+  "content": [...],
+  "pageable": {...},
+  "totalElements": 150,
+  "totalPages": 8,
+  "size": 20,
+  "number": 0
+}
+```
+
+### 10. Get Photos by Photographer
+**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos by photographer
+
+### 11. Get Approved Photos by Photographer
+**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/approved?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of approved photos by photographer
+
+### 12. Get Approved and Active Photos
+**Endpoint:** `GET /api/v1/photos/approved-active?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos that are both approved and active
+
+**Notes:**
+- This endpoint is typically used for public gallery display
+
+### 13. Get Featured Photos
+**Endpoint:** `GET /api/v1/photos/featured?page=0&size=10`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of featured photos
+
+### 14. Get Pending Approval Photos
+**Endpoint:** `GET /api/v1/photos/pending-approval?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos awaiting approval
+
+**Notes:**
+- Typically restricted to admin users
+
+### 15. Get Most Viewed Photos
+**Endpoint:** `GET /api/v1/photos/most-viewed?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos ordered by view count (descending)
+
+### 16. Get Most Downloaded Photos
+**Endpoint:** `GET /api/v1/photos/most-downloaded?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos ordered by download count (descending)
+
+### 17. Get Most Liked Photos
+**Endpoint:** `GET /api/v1/photos/most-liked?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos ordered by like count (descending)
+
+### 18. Get Recently Uploaded Photos
+**Endpoint:** `GET /api/v1/photos/recent?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Paginated list of photos ordered by upload date (descending)
+
+### 19. Get Similar Photos
+**Endpoint:** `GET /api/v1/photos/{id}/similar?limit=10`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `limit` (optional): Number of similar photos to return (default: 10, minimum: 1)
+
+**Response:**
+```json
+[
+  {...},
+  {...},
+  {...}
+]
+```
+
+**Notes:**
+- Finds similar photos based on shared tags
+- Returns approved and active photos only
+
+### 20. Get Photos by Tag
+**Endpoint:** `GET /api/v1/photos/by-tag/{tagName}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/by-tag/leopard?page=0&size=20
+```
+
+**Response:** Paginated list of photos with the specified tag
+
+### 21. Get Photos by Category
+**Endpoint:** `GET /api/v1/photos/by-category/{categorySlug}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/by-category/wildlife?page=0&size=20
+```
+
+**Response:** Paginated list of photos in the specified category
+
+### 22. Get Photos by Location
+**Endpoint:** `GET /api/v1/photos/by-location?location={location}&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/by-location?location=Yala&page=0&size=20
+```
+
+**Response:** Paginated list of photos from the specified location
+
+**Notes:**
+- Search is case-insensitive and uses partial matching
+
+### 23. Get Photos by Price Range
+**Endpoint:** `GET /api/v1/photos/by-price-range?minPrice=10.00&maxPrice=100.00&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `minPrice` (required): Minimum base price
+- `maxPrice` (required): Maximum base price
+- Standard pagination parameters
+
+**Response:** Paginated list of photos within the price range
+
+### 24. Get Photos Uploaded Between Dates
+**Endpoint:** `GET /api/v1/photos/uploaded-between?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `startDate` (required): Start date in ISO format
+- `endDate` (required): End date in ISO format
+- Standard pagination parameters
+
+**Response:** Paginated list of photos uploaded within the date range
+
+### 25. Search Photos
+**Endpoint:** `GET /api/v1/photos/search?q={searchTerm}&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/search?q=leopard&page=0&size=20
+```
+
+**Response:** Paginated list of photos matching the search term
+
+**Notes:**
+- Searches in both title and description
+- Case-insensitive search
+
+### 26. Advanced Search
+**Endpoint:** `POST /api/v1/photos/advanced-search?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "keyword": "leopard",
+  "categoryIds": [1, 2],
+  "tagNames": ["wildlife", "mammal"],
+  "photographerId": 1,
+  "minPrice": 10.00,
+  "maxPrice": 200.00,
+  "location": "Yala",
+  "isApproved": true,
+  "isActive": true,
+  "isFeatured": false,
+  "minViewCount": 100,
+  "format": "jpg",
+  "minWidth": 1920,
+  "minHeight": 1080
+}
+```
+
+**Response:** Paginated list of photos matching all specified criteria
+
+**Notes:**
+- All criteria are optional
+- Multiple criteria are combined with AND logic
+
+### 27. Deactivate Photo
+**Endpoint:** `PATCH /api/v1/photos/{id}/deactivate`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with `isActive=false`
+
+### 28. Activate Photo
+**Endpoint:** `PATCH /api/v1/photos/{id}/activate`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with `isActive=true`
+
+### 29. Approve Photo
+**Endpoint:** `PATCH /api/v1/photos/{id}/approve`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with `isApproved=true`
+
+**Notes:**
+- Typically restricted to admin users
+
+### 30. Reject Photo
+**Endpoint:** `PATCH /api/v1/photos/{id}/reject?reason={reason}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `reason` (required): Reason for rejection
+
+**Example:**
+```
+PATCH /api/v1/photos/1/reject?reason=Image%20quality%20too%20low
+```
+
+**Response:** Updated photo with `isApproved=false` and `isActive=false`
+
+### 31. Set Featured Status
+**Endpoint:** `PATCH /api/v1/photos/{id}/featured?featured={true|false}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+PATCH /api/v1/photos/1/featured?featured=true
+```
+
+**Response:** Updated photo with featured status
+
+### 32. Assign Tags to Photo
+**Endpoint:** `PUT /api/v1/photos/{id}/tags`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[1, 2, 3, 5, 8]
+```
+
+**Response:** Updated photo with new tag assignments
+
+**Notes:**
+- Replaces all existing tags
+- To add a single tag, use the Add Tag endpoint
+
+### 33. Add Tag to Photo
+**Endpoint:** `POST /api/v1/photos/{id}/tags/{tagId}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with the tag added
+
+**Notes:**
+- Increments the tag's usage count
+- If tag already exists on photo, no change occurs
+
+### 34. Remove Tag from Photo
+**Endpoint:** `DELETE /api/v1/photos/{id}/tags/{tagId}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with the tag removed
+
+**Notes:**
+- Decrements the tag's usage count
+
+### 35. Assign Categories to Photo
+**Endpoint:** `PUT /api/v1/photos/{id}/categories`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[1, 2, 4]
+```
+
+**Response:** Updated photo with new category assignments
+
+**Notes:**
+- Replaces all existing categories
+
+### 36. Add Category to Photo
+**Endpoint:** `POST /api/v1/photos/{id}/categories/{categoryId}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with the category added
+
+### 37. Remove Category from Photo
+**Endpoint:** `DELETE /api/v1/photos/{id}/categories/{categoryId}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with the category removed
+
+### 38. Increment View Count
+**Endpoint:** `POST /api/v1/photos/{id}/increment-views`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with incremented view count
+
+**Notes:**
+- Call this when a photo is viewed/displayed
+
+### 39. Increment Download Count
+**Endpoint:** `POST /api/v1/photos/{id}/increment-downloads`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with incremented download count
+
+**Notes:**
+- Call this when a photo is downloaded
+
+### 40. Like Photo
+**Endpoint:** `POST /api/v1/photos/{id}/like`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with incremented like count
+
+### 41. Unlike Photo
+**Endpoint:** `POST /api/v1/photos/{id}/unlike`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo with decremented like count
+
+### 42. Count Photos by Photographer
+**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/count`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+125
+```
+
+### 43. Count Approved Photos by Photographer
+**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/count-approved`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+98
+```
+
+### 44. Count Pending Approval Photos
+**Endpoint:** `GET /api/v1/photos/count-pending`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+27
+```
+
+### 45. Count Total Photos
+**Endpoint:** `GET /api/v1/photos/count`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+1547
+```
+
+### 46. Process Uploaded Photo
+**Endpoint:** `POST /api/v1/photos/{id}/process`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Updated photo after processing
+
+**Notes:**
+- Placeholder for image processing (thumbnails, watermarks, EXIF extraction)
+- Requires ImageProcessingService implementation
+
+### 47. Check Photo Exists
+**Endpoint:** `GET /api/v1/photos/{id}/exists`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:**
+```json
+true
+```
+
+### 48. Delete Photo
+**Endpoint:** `DELETE /api/v1/photos/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** `204 No Content`
+
+**Notes:**
+- Deletes the photo record and associated files from storage
+- Cannot be undone
+
+---
 
 ## 📂 Category Management Endpoints
 
