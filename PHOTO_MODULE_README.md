@@ -831,6 +831,441 @@ Authorization: Bearer {access_token}
 
 ---
 
+## 🔍 Advanced Photo Search Endpoints
+
+### 1. Search with Multiple Filters
+**Endpoint:** `POST /api/v1/photos/search/filters?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "searchTerm": "wildlife",
+  "categoryIds": [1, 2],
+  "tagNames": ["leopard", "elephant"],
+  "minPrice": 10.00,
+  "maxPrice": 100.00,
+  "location": "Yala National Park",
+  "photographerId": 5,
+  "isApproved": true,
+  "isActive": true,
+  "isFeatured": false,
+  "uploadStartDate": "2024-01-01T00:00:00",
+  "uploadEndDate": "2024-12-31T23:59:59",
+  "captureStartDate": "2024-01-01T00:00:00",
+  "captureEndDate": "2024-12-31T23:59:59",
+  "cameraModel": "Canon EOS R5",
+  "lens": "RF 100-500mm",
+  "isoRange": "100-800",
+  "apertureRange": "f/2.8-f/5.6",
+  "orientation": "LANDSCAPE",
+  "minWidth": 1920,
+  "minHeight": 1080
+}
+```
+
+**Response:** Paginated list of photos matching all specified filters
+
+**Notes:**
+- All fields are optional
+- Multiple filters are combined with AND logic
+
+### 2. Search by All Tags (AND)
+**Endpoint:** `GET /api/v1/photos/search/tags/all?tags=leopard&tags=yala&tags=wildlife&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photos that have ALL specified tags
+
+**Notes:**
+- Use multiple `tags` query parameters
+- Returns only photos that contain every specified tag
+
+### 3. Search by Any Tags (OR)
+**Endpoint:** `GET /api/v1/photos/search/tags/any?tags=leopard&tags=elephant&tags=whale&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photos that have ANY of the specified tags
+
+**Notes:**
+- Use multiple `tags` query parameters
+- Returns photos that contain at least one of the specified tags
+
+### 4. Search by Multiple Categories
+**Endpoint:** `GET /api/v1/photos/search/categories?slugs=wildlife&slugs=nature&slugs=landscape&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photos belonging to any of the specified categories
+
+**Notes:**
+- Use category slugs instead of IDs
+- Use multiple `slugs` query parameters
+
+### 5. Search by Photographer and Tags
+**Endpoint:** `GET /api/v1/photos/search/photographer/{photographerId}/tags?tags=leopard&tags=wildlife&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/search/photographer/5/tags?tags=leopard&tags=wildlife&page=0&size=20
+```
+
+**Response:** Photos by specific photographer that have all specified tags
+
+### 6. Search by Location and Price Range
+**Endpoint:** `GET /api/v1/photos/search/location-price?location=Yala&minPrice=10.00&maxPrice=100.00&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `location` (required): Location to search
+- `minPrice` (optional): Minimum price
+- `maxPrice` (optional): Maximum price
+
+**Response:** Photos from specified location within price range
+
+### 7. Search by Capture Date Range
+**Endpoint:** `GET /api/v1/photos/search/capture-date-range?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `startDate` (required): Start date in ISO format
+- `endDate` (required): End date in ISO format
+
+**Response:** Photos captured within the specified date range
+
+### 8. Search by Camera Model
+**Endpoint:** `GET /api/v1/photos/search/camera?model=Canon%20EOS%20R5&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photos taken with specified camera model
+
+### 9. Search by Lens
+**Endpoint:** `GET /api/v1/photos/search/lens?lens=RF%20100-500mm&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Response:** Photos taken with specified lens
+
+### 10. Search by ISO Range
+**Endpoint:** `GET /api/v1/photos/search/iso?range=100-800&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `range` (required): ISO range (e.g., "100-800", "1600-3200")
+
+**Response:** Photos within specified ISO range
+
+### 11. Search by Aperture Range
+**Endpoint:** `GET /api/v1/photos/search/aperture?range=f/2.8-f/5.6&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `range` (required): Aperture range (e.g., "f/2.8-f/5.6")
+
+**Response:** Photos within specified aperture range
+
+### 12. Search by Orientation
+**Endpoint:** `GET /api/v1/photos/search/orientation/{orientation}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Path Parameters:**
+- `orientation`: LANDSCAPE, PORTRAIT, or SQUARE
+
+**Example:**
+```
+GET /api/v1/photos/search/orientation/LANDSCAPE?page=0&size=20
+```
+
+**Response:** Photos with specified orientation
+
+### 13. Search by Minimum Dimensions
+**Endpoint:** `GET /api/v1/photos/search/dimensions?minWidth=1920&minHeight=1080&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `minWidth` (optional): Minimum width in pixels
+- `minHeight` (optional): Minimum height in pixels
+
+**Response:** Photos meeting minimum dimension requirements
+
+### 14. Get Popular Photos
+**Endpoint:** `GET /api/v1/photos/search/popular/{metric}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Path Parameters:**
+- `metric`: views, downloads, or likes
+
+**Example:**
+```
+GET /api/v1/photos/search/popular/views?page=0&size=20
+```
+
+**Response:** Photos ordered by specified popularity metric (descending)
+
+### 15. Get Trending Photos
+**Endpoint:** `GET /api/v1/photos/search/trending?days=7&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `days` (optional): Number of days to look back (default: 7, minimum: 1)
+
+**Response:** Photos with highest engagement in recent days
+
+**Notes:**
+- Considers views, downloads, and likes in recent time period
+
+### 16. Get Recommended Photos
+**Endpoint:** `GET /api/v1/photos/search/recommended/{userId}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Example:**
+```
+GET /api/v1/photos/search/recommended/10?page=0&size=20
+```
+
+**Response:** Personalized photo recommendations for user
+
+**Notes:**
+- Based on user's browsing history and preferences
+
+### 17. Get Photos by Price Tier
+**Endpoint:** `GET /api/v1/photos/search/price-tier/{tier}?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Path Parameters:**
+- `tier`: BUDGET, STANDARD, PREMIUM, or LUXURY
+
+**Example:**
+```
+GET /api/v1/photos/search/price-tier/PREMIUM?page=0&size=20
+```
+
+**Response:** Photos in specified price tier
+
+### 18. Full-Text Search
+**Endpoint:** `GET /api/v1/photos/search/full-text?query=wildlife%20sri%20lanka&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `query` (required): Full-text search query
+
+**Response:** Photos matching full-text search across all text fields
+
+**Notes:**
+- Searches in title, description, location, tags, and categories
+
+### 19. Filter Approved Photos
+**Endpoint:** `POST /api/v1/photos/search/approved?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "keyword": "wildlife",
+  "categorySlugs": ["nature", "wildlife"],
+  "tagNames": ["leopard", "elephant"],
+  "minPrice": 10.00,
+  "maxPrice": 100.00,
+  "location": "Yala",
+  "photographerId": 5,
+  "orientation": "LANDSCAPE",
+  "minWidth": 1920,
+  "minHeight": 1080,
+  "cameraModel": "Canon EOS R5"
+}
+```
+
+**Response:** Approved photos matching search criteria
+
+**Notes:**
+- Automatically filters for approved photos only
+- All fields are optional
+
+### 20. Get Recent Photos by Photographer
+**Endpoint:** `GET /api/v1/photos/search/photographer/{photographerId}/recent?days=30&page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+```
+
+**Query Parameters:**
+- `days` (optional): Number of days to look back (default: 30, minimum: 1)
+
+**Example:**
+```
+GET /api/v1/photos/search/photographer/5/recent?days=7&page=0&size=20
+```
+
+**Response:** Recent photos by specified photographer
+
+### 21. Comprehensive Search with Criteria
+**Endpoint:** `POST /api/v1/photos/search/comprehensive?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "keyword": "wildlife",
+  "categoryIds": [1, 2],
+  "categorySlugs": ["nature", "wildlife"],
+  "tagNames": ["leopard", "elephant"],
+  "tagIds": [1, 2, 3],
+  "photographerId": 5,
+  "minPrice": 10.00,
+  "maxPrice": 100.00,
+  "location": "Yala National Park",
+  "cameraModel": "Canon EOS R5",
+  "uploadStartDate": "2024-01-01T00:00:00",
+  "uploadEndDate": "2024-12-31T23:59:59",
+  "captureStartDate": "2024-01-01T00:00:00",
+  "captureEndDate": "2024-12-31T23:59:59",
+  "isApproved": true,
+  "isActive": true,
+  "isFeatured": false,
+  "minViewCount": 100,
+  "minDownloadCount": 10,
+  "minLikeCount": 50,
+  "format": "jpg",
+  "minWidth": 1920,
+  "minHeight": 1080,
+  "orientation": "LANDSCAPE",
+  "priceTier": "PREMIUM",
+  "sortBy": "createdAt",
+  "sortDirection": "DESC",
+  "hasWatermark": true,
+  "hasThumbnail": true,
+  "isoRange": "100-800",
+  "apertureRange": "f/2.8-f/5.6",
+  "lens": "RF 100-500mm",
+  "includePhotographer": true,
+  "includeTags": true,
+  "includeCategories": true
+}
+```
+
+**Response:** Photos matching all specified comprehensive criteria
+
+**Notes:**
+- Most flexible search endpoint
+- All fields are optional
+- Supports multiple sorting and filtering options
+- Can eagerly load related entities
+
+### 22. Quick Search
+**Endpoint:** `POST /api/v1/photos/search/quick?page=0&size=20`
+
+**Headers:**
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "keyword": "wildlife",
+  "categorySlugs": ["nature", "animals"],
+  "tagNames": ["elephant", "safari"],
+  "minPrice": 10.00,
+  "maxPrice": 100.00,
+  "location": "Yala National Park",
+  "photographerId": 5,
+  "orientation": "LANDSCAPE"
+}
+```
+
+**Response:** Approved and active photos matching quick search criteria
+
+**Notes:**
+- Simplified search for public-facing searches
+- Automatically filters for approved and active photos
+- All fields are optional
+- Returns empty results if no criteria match
+
+---
+
 ## 📂 Category Management Endpoints
 
 ### 1. Create Category

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -157,5 +158,33 @@ public class PhotoResponseDto {
                 .createdAt(photo.getCreatedAt())
                 .updatedAt(photo.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Convert a list of Photo entities to a list of PhotoResponseDtos.
+     *
+     * @param photos the list of photo entities
+     * @return list of PhotoResponseDtos
+     */
+    public static List<PhotoResponseDto> fromEntityList(List<Photo> photos) {
+        if (photos == null) {
+            return null;
+        }
+        return photos.stream()
+                .map(PhotoResponseDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Convert a Page of Photo entities to a Page of PhotoResponseDtos.
+     *
+     * @param photoPage the page of photo entities
+     * @return page of PhotoResponseDtos
+     */
+    public static Page<PhotoResponseDto> fromEntityPage(Page<Photo> photoPage) {
+        if (photoPage == null) {
+            return null;
+        }
+        return photoPage.map(PhotoResponseDto::fromEntity);
     }
 }

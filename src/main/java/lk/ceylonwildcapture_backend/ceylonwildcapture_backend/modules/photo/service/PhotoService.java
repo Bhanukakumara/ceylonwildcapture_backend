@@ -1,6 +1,6 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.PhotoSearchCriteria;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.photo.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

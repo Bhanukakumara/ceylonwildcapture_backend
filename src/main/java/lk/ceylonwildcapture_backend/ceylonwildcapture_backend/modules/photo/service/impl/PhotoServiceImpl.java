@@ -2,7 +2,7 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.ser
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.PhotoSearchCriteria;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.photo.*;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Category;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Photo;

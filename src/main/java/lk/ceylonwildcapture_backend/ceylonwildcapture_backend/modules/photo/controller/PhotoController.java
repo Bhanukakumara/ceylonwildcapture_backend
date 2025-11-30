@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.PhotoSearchCriteria;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.photo.*;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoService;
 import org.springframework.data.domain.Page;
