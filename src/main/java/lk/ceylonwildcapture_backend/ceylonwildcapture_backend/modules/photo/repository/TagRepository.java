@@ -152,4 +152,19 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
      * @return page of recent tags
      */
     Page<Tag> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    Optional<Object> findTopByOrderByUsageCountDesc(int i);
+
+    Optional<Object> findByUsageCount(int i);
+
+    long countByUsageCount(int i);
+
+    void deleteByUsageCount(int i);
+
+    @Query("""
+        SELECT t FROM Tag t 
+        WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) 
+           OR LOWER(t.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+        """)
+    Page<Tag> searchTags(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

@@ -1,6 +1,9 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Photo;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoFilterDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoSearchCriteria;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.QuickSearchDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.photo.PhotoResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,51 +14,19 @@ import java.util.List;
 /**
  * Service interface for advanced photo search operations.
  * Defines business logic for complex photo searches with multiple criteria,
- * filters, and sorting options.
+ * filters, and sorting options. Returns DTOs instead of entities.
+ * Removes duplicate methods already present in PhotoService.
  */
 public interface PhotoSearchService {
 
     /**
-     * Advanced search with multiple criteria.
+     * Search photos with multiple filters.
      *
-     * @param searchCriteria the search criteria object (DTO placeholder)
+     * @param filters the photo filter DTO containing all filter criteria
      * @param pageable pagination information
-     * @return page of matching photos
+     * @return page of matching photo DTOs
      */
-    Page<Photo> advancedSearch(Object searchCriteria, Pageable pageable);
-
-    /**
-     * Search photos with filters.
-     *
-     * @param searchTerm the search term for title/description
-     * @param categoryIds the list of category IDs
-     * @param tagNames the list of tag names
-     * @param minPrice the minimum price
-     * @param maxPrice the maximum price
-     * @param location the location
-     * @param photographerId the photographer ID
-     * @param pageable pagination information
-     * @return page of matching photos
-     */
-    Page<Photo> searchWithFilters(
-            String searchTerm,
-            List<Long> categoryIds,
-            List<String> tagNames,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String location,
-            Long photographerId,
-            Pageable pageable
-    );
-
-    /**
-     * Search photos by keyword in title and description.
-     *
-     * @param keyword the search keyword
-     * @param pageable pagination information
-     * @return page of matching photos
-     */
-    Page<Photo> searchByKeyword(String keyword, Pageable pageable);
+    Page<PhotoResponseDto> searchWithFilters(PhotoFilterDto filters, Pageable pageable);
 
     /**
      * Search photos by multiple tags (AND operation).
@@ -64,7 +35,7 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos containing all specified tags
      */
-    Page<Photo> searchByAllTags(List<String> tagNames, Pageable pageable);
+    Page<PhotoResponseDto> searchByAllTags(List<String> tagNames, Pageable pageable);
 
     /**
      * Search photos by any tags (OR operation).
@@ -73,7 +44,7 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos containing any of the specified tags
      */
-    Page<Photo> searchByAnyTags(List<String> tagNames, Pageable pageable);
+    Page<PhotoResponseDto> searchByAnyTags(List<String> tagNames, Pageable pageable);
 
     /**
      * Search photos by multiple categories.
@@ -82,7 +53,7 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos in any of the specified categories
      */
-    Page<Photo> searchByCategories(List<String> categorySlugs, Pageable pageable);
+    Page<PhotoResponseDto> searchByCategories(List<String> categorySlugs, Pageable pageable);
 
     /**
      * Search photos by photographer and tags.
@@ -90,9 +61,9 @@ public interface PhotoSearchService {
      * @param photographerId the photographer ID
      * @param tagNames the list of tag names
      * @param pageable pagination information
-     * @return page of matching photos
+     * @return page of matching photo DTOs
      */
-    Page<Photo> searchByPhotographerAndTags(Long photographerId, List<String> tagNames, Pageable pageable);
+    Page<PhotoResponseDto> searchByPhotographerAndTags(Long photographerId, List<String> tagNames, Pageable pageable);
 
     /**
      * Search photos by location and price range.
@@ -101,24 +72,14 @@ public interface PhotoSearchService {
      * @param minPrice the minimum price
      * @param maxPrice the maximum price
      * @param pageable pagination information
-     * @return page of matching photos
+     * @return page of matching photo DTOs
      */
-    Page<Photo> searchByLocationAndPriceRange(
+    Page<PhotoResponseDto> searchByLocationAndPriceRange(
             String location,
             BigDecimal minPrice,
             BigDecimal maxPrice,
             Pageable pageable
     );
-
-    /**
-     * Search photos by date range.
-     *
-     * @param startDate the start date
-     * @param endDate the end date
-     * @param pageable pagination information
-     * @return page of photos uploaded within date range
-     */
-    Page<Photo> searchByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
      * Search photos by capture date range.
@@ -128,7 +89,7 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos captured within date range
      */
-    Page<Photo> searchByCaptureDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<PhotoResponseDto> searchByCaptureDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
      * Search photos by camera model.
@@ -137,43 +98,34 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos taken with the camera
      */
-    Page<Photo> searchByCameraModel(String cameraModel, Pageable pageable);
+    Page<PhotoResponseDto> searchByCameraModel(String cameraModel, Pageable pageable);
 
     /**
      * Get popular photos (by views, downloads, or likes).
      *
      * @param metric the popularity metric (VIEWS, DOWNLOADS, LIKES)
      * @param pageable pagination information
-     * @return page of popular photos
+     * @return page of popular photo DTOs
      */
-    Page<Photo> getPopularPhotos(String metric, Pageable pageable);
+    Page<PhotoResponseDto> getPopularPhotos(String metric, Pageable pageable);
 
     /**
      * Get trending photos (recently popular).
      *
      * @param days the number of days to consider
      * @param pageable pagination information
-     * @return page of trending photos
+     * @return page of trending photo DTOs
      */
-    Page<Photo> getTrendingPhotos(int days, Pageable pageable);
+    Page<PhotoResponseDto> getTrendingPhotos(int days, Pageable pageable);
 
     /**
      * Get recommended photos based on user preferences.
      *
      * @param userId the user ID
      * @param pageable pagination information
-     * @return page of recommended photos
+     * @return page of recommended photo DTOs
      */
-    Page<Photo> getRecommendedPhotos(Long userId, Pageable pageable);
-
-    /**
-     * Get similar photos based on tags and categories.
-     *
-     * @param photoId the photo ID
-     * @param limit the maximum number of similar photos
-     * @return list of similar photos
-     */
-    List<Photo> getSimilarPhotos(Long photoId, Integer limit);
+    Page<PhotoResponseDto> getRecommendedPhotos(Long userId, Pageable pageable);
 
     /**
      * Get photos by price tier.
@@ -182,33 +134,25 @@ public interface PhotoSearchService {
      * @param pageable pagination information
      * @return page of photos in the price tier
      */
-    Page<Photo> getPhotosByPriceTier(String priceTier, Pageable pageable);
+    Page<PhotoResponseDto> getPhotosByPriceTier(String priceTier, Pageable pageable);
 
     /**
      * Search photos with full-text search (if supported).
      *
      * @param query the full-text search query
      * @param pageable pagination information
-     * @return page of matching photos
+     * @return page of matching photo DTOs
      */
-    Page<Photo> fullTextSearch(String query, Pageable pageable);
+    Page<PhotoResponseDto> fullTextSearch(String query, Pageable pageable);
 
     /**
      * Filter approved photos by criteria.
      *
-     * @param filterCriteria the filter criteria object (DTO placeholder)
+     * @param searchCriteria the filter criteria object
      * @param pageable pagination information
-     * @return page of filtered photos
+     * @return page of filtered photo DTOs
      */
-    Page<Photo> filterApprovedPhotos(Object filterCriteria, Pageable pageable);
-
-    /**
-     * Get photos needing moderation.
-     *
-     * @param pageable pagination information
-     * @return page of photos pending approval
-     */
-    Page<Photo> getPhotosNeedingModeration(Pageable pageable);
+    Page<PhotoResponseDto> filterApprovedPhotos(PhotoSearchCriteria searchCriteria, Pageable pageable);
 
     /**
      * Get recently uploaded photos by photographer.
@@ -216,23 +160,71 @@ public interface PhotoSearchService {
      * @param photographerId the photographer ID
      * @param days the number of days to look back
      * @param pageable pagination information
-     * @return page of recent photos
+     * @return page of recent photo DTOs
      */
-    Page<Photo> getRecentPhotosByPhotographer(Long photographerId, int days, Pageable pageable);
+    Page<PhotoResponseDto> getRecentPhotosByPhotographer(Long photographerId, int days, Pageable pageable);
 
     /**
-     * Search photos with sorting options.
+     * Search photos with comprehensive criteria and sorting.
      *
-     * @param searchCriteria the search criteria object (DTO placeholder)
-     * @param sortBy the field to sort by
-     * @param sortDirection the sort direction (ASC, DESC)
+     * @param searchCriteria the search criteria object with all filters and sort options
      * @param pageable pagination information
-     * @return page of sorted and filtered photos
+     * @return page of sorted and filtered photo DTOs
      */
-    Page<Photo> searchWithSorting(
-            Object searchCriteria,
-            String sortBy,
-            String sortDirection,
-            Pageable pageable
-    );
+    Page<PhotoResponseDto> searchWithCriteria(PhotoSearchCriteria searchCriteria, Pageable pageable);
+
+    /**
+     * Get photos by lens type.
+     *
+     * @param lens the lens model/type
+     * @param pageable pagination information
+     * @return page of photos taken with the lens
+     */
+    Page<PhotoResponseDto> searchByLens(String lens, Pageable pageable);
+
+    /**
+     * Get photos by ISO range.
+     *
+     * @param isoRange the ISO range (e.g., "100-400", "800+")
+     * @param pageable pagination information
+     * @return page of photos in the ISO range
+     */
+    Page<PhotoResponseDto> searchByIsoRange(String isoRange, Pageable pageable);
+
+    /**
+     * Get photos by aperture range.
+     *
+     * @param apertureRange the aperture range (e.g., "f/1.4-f/2.8")
+     * @param pageable pagination information
+     * @return page of photos in the aperture range
+     */
+    Page<PhotoResponseDto> searchByApertureRange(String apertureRange, Pageable pageable);
+
+    /**
+     * Get photos by orientation.
+     *
+     * @param orientation the orientation (LANDSCAPE, PORTRAIT, SQUARE)
+     * @param pageable pagination information
+     * @return page of photos with the orientation
+     */
+    Page<PhotoResponseDto> searchByOrientation(String orientation, Pageable pageable);
+
+    /**
+     * Get photos by minimum dimensions.
+     *
+     * @param minWidth the minimum width
+     * @param minHeight the minimum height
+     * @param pageable pagination information
+     * @return page of photos meeting dimension requirements
+     */
+    Page<PhotoResponseDto> searchByMinimumDimensions(Integer minWidth, Integer minHeight, Pageable pageable);
+
+    /**
+     * Quick search with simplified criteria.
+     *
+     * @param quickSearch the quick search DTO with common filters
+     * @param pageable pagination information
+     * @return page of matching photo DTOs
+     */
+    Page<PhotoResponseDto> quickSearch(QuickSearchDto quickSearch, Pageable pageable);
 }

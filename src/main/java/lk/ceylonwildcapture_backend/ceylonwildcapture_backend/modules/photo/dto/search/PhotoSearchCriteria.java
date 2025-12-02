@@ -1,4 +1,4 @@
-package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto;
+package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
