@@ -3,6 +3,7 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.ent
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.enums.ActionResult;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

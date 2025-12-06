@@ -2,7 +2,9 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.ent
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+// import jakarta.persistence.metamodel.EntityType; // Removed incorrect import
 import jakarta.validation.constraints.NotNull;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.enums.ActionResult;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +20,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "admin_action_audits", indexes = {
-    @Index(name = "idx_admin_id", columnList = "admin_id"),
-    @Index(name = "idx_entity_id", columnList = "entity_id"),
-    @Index(name = "idx_entity_type", columnList = "entity_type"),
-    @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_admin_id", columnList = "admin_id"),
+        @Index(name = "idx_entity_id", columnList = "entity_id"),
+        @Index(name = "idx_entity_type", columnList = "entity_type"),
+        @Index(name = "idx_created_at", columnList = "created_at")
 })
 @Data
 @Builder
