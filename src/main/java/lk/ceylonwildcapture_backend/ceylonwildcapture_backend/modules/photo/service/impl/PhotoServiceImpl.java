@@ -11,7 +11,6 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repo
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repository.PhotoRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repository.TagRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.FileStorageService;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.ImageProcessingService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,7 +40,7 @@ public class PhotoServiceImpl implements PhotoService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final Cloudinary cloudinary;
-    
+
     @Autowired(required = false)
     private FileStorageService fileStorageService;
 
@@ -50,13 +48,12 @@ public class PhotoServiceImpl implements PhotoService {
     private static final String ERR_USER_NOT_FOUND = "User not found: ";
     private static final String ERR_TAG_NOT_FOUND = "Tag not found: ";
     private static final String ERR_CATEGORY_NOT_FOUND = "Category not found: ";
-    private static final String PHOTO_FOLDER = "photos";
-    
-    public PhotoServiceImpl(PhotoRepository photoRepository, 
-                           UserRepository userRepository,
-                           TagRepository tagRepository, 
-                           CategoryRepository categoryRepository,
-                           Cloudinary cloudinary) {
+
+    public PhotoServiceImpl(PhotoRepository photoRepository,
+            UserRepository userRepository,
+            TagRepository tagRepository,
+            CategoryRepository categoryRepository,
+            Cloudinary cloudinary) {
         this.photoRepository = photoRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
@@ -65,6 +62,7 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public PhotoResponseDto uploadPhoto(MultipartFile file, PhotoCreateDto photoCreateDto) {
         log.info("Uploading photo with title: {}", photoCreateDto.getTitle());
         Objects.requireNonNull(file, "File must not be null");
@@ -77,24 +75,22 @@ public class PhotoServiceImpl implements PhotoService {
 
         // Get photographer
         User photographer = userRepository.findById(photoCreateDto.getPhotographerId())
-                .orElseThrow(() -> new IllegalArgumentException(ERR_USER_NOT_FOUND + photoCreateDto.getPhotographerId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException(ERR_USER_NOT_FOUND + photoCreateDto.getPhotographerId()));
 
         // ⭐ Upload to Cloudinary
-        Map uploadResult;
+        Map<String, Object> uploadResult;
         try {
             uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", "photos",
-                            "resource_type", "image"
-                    )
-            );
+                            "resource_type", "image"));
         } catch (IOException e) {
             throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
 
         String imageUrl = (String) uploadResult.get("secure_url");
-        String publicId = (String) uploadResult.get("public_id");
 
         // Build and save photo entity
         Photo photo = buildPhotoFromCreateDto(photoCreateDto, photographer, imageUrl);
@@ -113,7 +109,8 @@ public class PhotoServiceImpl implements PhotoService {
         Objects.requireNonNull(photoCreateDto, "PhotoCreateDto must not be null");
 
         User photographer = userRepository.findById(photoCreateDto.getPhotographerId())
-                .orElseThrow(() -> new IllegalArgumentException(ERR_USER_NOT_FOUND + photoCreateDto.getPhotographerId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException(ERR_USER_NOT_FOUND + photoCreateDto.getPhotographerId()));
 
         Photo photo = buildPhotoFromCreateDto(photoCreateDto, photographer, null);
         Photo saved = photoRepository.save(photo);
@@ -576,7 +573,8 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PhotoResponseDto> getPhotosUploadedBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<PhotoResponseDto> getPhotosUploadedBetween(LocalDateTime startDate, LocalDateTime endDate,
+            Pageable pageable) {
         log.debug("Getting photos uploaded between {} and {}", startDate, endDate);
         return photoRepository.findByCreatedAtBetween(startDate, endDate, pageable)
                 .map(PhotoResponseDto::fromEntitySimple);
@@ -594,7 +592,7 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(readOnly = true)
     public Page<PhotoResponseDto> advancedSearch(PhotoSearchCriteria searchCriteria, Pageable pageable) {
         log.debug("Advanced photo search with criteria: {}", searchCriteria);
-        
+
         List<String> tagNames = null;
         if (searchCriteria.getTagNames() != null && !searchCriteria.getTagNames().isEmpty()) {
             tagNames = searchCriteria.getTagNames().stream()
@@ -612,8 +610,7 @@ public class PhotoServiceImpl implements PhotoService {
                 searchCriteria.getPhotographerId(),
                 searchCriteria.getIsApproved(),
                 searchCriteria.getIsActive(),
-                pageable
-        ).map(PhotoResponseDto::fromEntitySimple);
+                pageable).map(PhotoResponseDto::fromEntitySimple);
     }
 
     @Override
@@ -647,10 +644,10 @@ public class PhotoServiceImpl implements PhotoService {
                 .orElseThrow(() -> new IllegalArgumentException(ERR_PHOTO_NOT_FOUND + photoId));
 
         try {
-            // Note: Actual image processing (thumbnail, watermark, EXIF extraction) 
+            // Note: Actual image processing (thumbnail, watermark, EXIF extraction)
             // should be implemented using ImageProcessingService and FileStorageService
             // when those services are fully implemented
-            
+
             Photo updated = photoRepository.save(photo);
             return PhotoResponseDto.fromEntity(updated);
         } catch (Exception e) {

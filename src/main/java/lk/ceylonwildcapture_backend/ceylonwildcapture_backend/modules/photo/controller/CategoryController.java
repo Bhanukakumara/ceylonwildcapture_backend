@@ -12,7 +12,6 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.category.CategoryReorderItemDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -2,7 +2,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.se
 
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.PayoutRequestDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.PayoutResponseDto;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.entity.Payout;
 
 import java.math.BigDecimal;
 

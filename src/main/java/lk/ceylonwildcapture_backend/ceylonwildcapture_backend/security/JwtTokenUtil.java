@@ -16,7 +16,8 @@ import java.util.function.Function;
 
 /**
  * Utility class for JWT token operations.
- * Provides methods for generating, validating, and extracting information from JWT tokens.
+ * Provides methods for generating, validating, and extracting information from
+ * JWT tokens.
  */
 @Component
 @Slf4j
@@ -69,9 +70,9 @@ public class JwtTokenUtil {
     /**
      * Extract specific claim from JWT token.
      *
-     * @param token JWT token
+     * @param token          JWT token
      * @param claimsResolver function to extract claim
-     * @param <T> claim type
+     * @param <T>            claim type
      * @return claim value
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -124,7 +125,7 @@ public class JwtTokenUtil {
      * Generate JWT access token for user.
      *
      * @param username username
-     * @param role user role
+     * @param role     user role
      * @return JWT token
      */
     public String generateAccessToken(String username, UserRole role) {
@@ -146,8 +147,8 @@ public class JwtTokenUtil {
     /**
      * Create JWT token with claims and expiration.
      *
-     * @param claims claims to include in token
-     * @param subject token subject (username)
+     * @param claims     claims to include in token
+     * @param subject    token subject (username)
      * @param expiration token expiration time
      * @return JWT token
      */
@@ -156,18 +157,18 @@ public class JwtTokenUtil {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .claims(claims)
+                .subject(subject)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
     /**
      * Validate JWT token against user details.
      *
-     * @param token JWT token
+     * @param token       JWT token
      * @param userDetails user details
      * @return true if valid, false otherwise
      */

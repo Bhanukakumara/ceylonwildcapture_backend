@@ -1,7 +1,6 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.service.impl;
 
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.EarningsResponseDto;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.repository.EarningsSnapshotRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.service.EarningsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +23,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EarningsServiceImpl implements EarningsService {
 
-    private final EarningsSnapshotRepository earningsSnapshotRepository;
 
     @Override
     public BigDecimal calculatePendingEarnings(Long photographerId) {

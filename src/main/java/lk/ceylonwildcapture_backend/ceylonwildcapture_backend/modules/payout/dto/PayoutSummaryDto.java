@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.PayoutStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -36,6 +36,7 @@ public class SystemConfig {
     private String dataType; // STRING, NUMBER, BOOLEAN, JSON
 
     @Column(name = "is_public")
+    @Builder.Default
     private Boolean isPublic = false;
 
     @Column(name = "default_value", columnDefinition = "TEXT")

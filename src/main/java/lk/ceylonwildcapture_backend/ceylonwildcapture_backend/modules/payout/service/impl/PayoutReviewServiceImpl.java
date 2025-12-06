@@ -3,7 +3,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.se
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.PayoutAuditDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.PayoutResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.dto.PayoutReviewDto;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.repository.PayoutRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payout.service.PayoutReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,7 +24,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PayoutReviewServiceImpl implements PayoutReviewService {
 
-    private final PayoutRepository payoutRepository;
 
     @Override
     public PayoutResponseDto approvePayout(PayoutReviewDto payoutReviewDto) {

@@ -25,5 +25,6 @@ public class UserLoginDto {
     @Size(min = 1, message = "Password is required")
     private String password;
 
+    @Builder.Default
     private Boolean rememberMe = false;
 }
