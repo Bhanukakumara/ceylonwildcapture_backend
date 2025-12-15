@@ -37,25 +37,17 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and return JWT tokens")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Login successful"),
-        @ApiResponse(responseCode = "401", description = "Invalid credentials"),
-        @ApiResponse(responseCode = "400", description = "Bad request")
+            @ApiResponse(responseCode = "200", description = "Login successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "400", description = "Bad request")
     })
     public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody UserLoginDto loginRequest) {
         log.info("Login attempt for user: {}", loginRequest.getUsernameOrEmail());
 
-        Map<String, Object> authResult = authenticationService.authenticate(loginRequest);
-
-        AuthResponseDto response = AuthResponseDto.builder()
-                .accessToken((String) authResult.get("accessToken"))
-                .refreshToken((String) authResult.get("refreshToken"))
-                .tokenType((String) authResult.get("tokenType"))
-                .expiresIn((Long) authResult.get("expiresIn"))
-                .user(convertToUserInfoDto((Map<String, Object>) authResult.get("user")))
-                .build();
+        AuthResponseDto authResponse = authenticationService.authenticate(loginRequest);
 
         log.info("User logged in successfully: {}", loginRequest.getUsernameOrEmail());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authResponse);
     }
 
     /**
@@ -67,9 +59,9 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Refresh token", description = "Generate new access token using refresh token")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
-        @ApiResponse(responseCode = "401", description = "Invalid refresh token"),
-        @ApiResponse(responseCode = "400", description = "Bad request")
+            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid refresh token"),
+            @ApiResponse(responseCode = "400", description = "Bad request")
     })
     public ResponseEntity<Map<String, Object>> refreshToken(@Valid @RequestBody RefreshTokenRequestDto refreshRequest) {
         log.debug("Token refresh request received");
@@ -88,20 +80,19 @@ public class AuthController {
     @PostMapping("/validate")
     @Operation(summary = "Validate credentials", description = "Validate user credentials without generating tokens")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Credentials valid"),
-        @ApiResponse(responseCode = "401", description = "Invalid credentials"),
-        @ApiResponse(responseCode = "400", description = "Bad request")
+            @ApiResponse(responseCode = "200", description = "Credentials valid"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "400", description = "Bad request")
     })
     public ResponseEntity<Map<String, Boolean>> validateCredentials(@Valid @RequestBody UserLoginDto loginRequest) {
         log.debug("Validating credentials for user: {}", loginRequest.getUsernameOrEmail());
 
         boolean isValid = authenticationService.validateCredentials(
-                loginRequest.getUsernameOrEmail(), 
-                loginRequest.getPassword()
-        );
+                loginRequest.getUsernameOrEmail(),
+                loginRequest.getPassword());
 
         Map<String, Boolean> response = Map.of("valid", isValid);
-        
+
         if (isValid) {
             log.debug("Credentials validated successfully for user: {}", loginRequest.getUsernameOrEmail());
             return ResponseEntity.ok(response);
@@ -109,24 +100,5 @@ public class AuthController {
             log.debug("Invalid credentials for user: {}", loginRequest.getUsernameOrEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-    }
-
-    /**
-     * Convert user map to UserInfoDto.
-     *
-     * @param userMap user information map
-     * @return UserInfoDto
-     */
-    private AuthResponseDto.UserInfoDto convertToUserInfoDto(Map<String, Object> userMap) {
-        return AuthResponseDto.UserInfoDto.builder()
-                .id((Long) userMap.get("id"))
-                .username((String) userMap.get("username"))
-                .email((String) userMap.get("email"))
-                .firstName((String) userMap.get("firstName"))
-                .lastName((String) userMap.get("lastName"))
-                .role((lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.UserRole) userMap.get("role"))
-                .isActive((Boolean) userMap.get("isActive"))
-                .emailVerified((Boolean) userMap.get("emailVerified"))
-                .build();
     }
 }

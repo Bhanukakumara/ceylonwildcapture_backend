@@ -13,9 +13,7 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.enti
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repository.PhotoRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoSearchService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,8 +52,6 @@ public class PhotoSearchServiceImpl implements PhotoSearchService {
     private static final String FIELD_LOCATION = "location";
     private static final String FIELD_CAMERA_MODEL = "cameraModel";
     private static final String FIELD_LENS = "lens";
-    private static final String FIELD_ISO = "iso";
-    private static final String FIELD_APERTURE = "aperture";
     private static final String FIELD_WIDTH = "width";
     private static final String FIELD_HEIGHT = "height";
     private static final String FIELD_CREATED_AT = "createdAt";

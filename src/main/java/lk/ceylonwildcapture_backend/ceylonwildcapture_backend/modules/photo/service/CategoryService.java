@@ -3,7 +3,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.ser
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.category.CategoryCreateDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.category.CategoryResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.category.CategoryUpdateDto;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

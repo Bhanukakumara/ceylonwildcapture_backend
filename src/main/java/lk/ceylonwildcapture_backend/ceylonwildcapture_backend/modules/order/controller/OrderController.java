@@ -3,7 +3,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.con
 import jakarta.validation.Valid;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.OrderStatus;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.*;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.mapper.OrderMapper;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,8 +24,6 @@ import java.time.LocalDateTime;
 public class OrderController {
 
     private final OrderService orderService;
-    private final OrderMapper orderMapper;
-
     /**
      * Create a new order.
      *

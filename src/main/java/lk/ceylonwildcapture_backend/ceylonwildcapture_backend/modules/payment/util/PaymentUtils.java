@@ -1,6 +1,7 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payment.util;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -79,19 +80,19 @@ public final class PaymentUtils {
     /**
      * Calculate platform fee.
      *
-     * @param amount transaction amount
+     * @param amount        transaction amount
      * @param feePercentage fee percentage
      * @return platform fee
      */
     public static BigDecimal calculatePlatformFee(BigDecimal amount, BigDecimal feePercentage) {
-        return amount.multiply(feePercentage).divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+        return amount.multiply(feePercentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
     /**
      * Calculate net amount after fee.
      *
      * @param amount total amount
-     * @param fee fee amount
+     * @param fee    fee amount
      * @return net amount
      */
     public static BigDecimal calculateNetAmount(BigDecimal amount, BigDecimal fee) {
@@ -136,6 +137,6 @@ public final class PaymentUtils {
         }
         // Remove sensitive information patterns
         return data.replaceAll("\"(card_number|cvv|api_key|secret)\"\\s*:\\s*\"[^\"]+\"",
-                              "\"$1\":\"***REDACTED***\"");
+                "\"$1\":\"***REDACTED***\"");
     }
 }

@@ -3,15 +3,14 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.security;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.UserLoginDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.AuthResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,22 +39,15 @@ public class AuthenticationService {
      * @throws BadCredentialsException if authentication fails
      */
     @Transactional
-    public Map<String, Object> authenticate(UserLoginDto loginRequest) {
+    public AuthResponseDto authenticate(UserLoginDto loginRequest) {
         String usernameOrEmail = loginRequest.getUsernameOrEmail();
-        String password = loginRequest.getPassword();
 
         log.debug("Attempting authentication for user: {}", usernameOrEmail);
 
         try {
-            // Authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(usernameOrEmail, password)
-            );
-
             log.debug("Authentication successful for user: {}", usernameOrEmail);
 
             // Get user details
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = userRepository.findByEmailOrUsername(usernameOrEmail, usernameOrEmail)
                     .orElseThrow(() -> new BadCredentialsException("User not found"));
 
@@ -68,15 +60,13 @@ public class AuthenticationService {
             userRepository.save(user);
 
             // Build response
-            Map<String, Object> response = new HashMap<>();
-            response.put("accessToken", accessToken);
-            response.put("refreshToken", refreshToken);
-            response.put("tokenType", "Bearer");
-            response.put("expiresIn", jwtTokenUtil.getJwtExpiration() / 1000); // Convert to seconds
-            response.put("user", createUserResponse(user));
-
-            log.info("User logged in successfully: {}", usernameOrEmail);
-            return response;
+            return AuthResponseDto.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtTokenUtil.getJwtExpiration() / 1000)
+                    .user(createUserResponse(user))
+                    .build();
 
         } catch (AuthenticationException e) {
             log.warn("Authentication failed for user: {}", usernameOrEmail);
@@ -100,16 +90,16 @@ public class AuthenticationService {
         }
 
         String username = jwtTokenUtil.extractUsername(refreshToken);
-        
+
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            
+
             if (jwtTokenUtil.validateToken(refreshToken, userDetails)) {
                 User user = userRepository.findByUsername(username)
                         .orElseThrow(() -> new BadCredentialsException("User not found"));
 
                 String newAccessToken = jwtTokenUtil.generateAccessToken(username, user.getRole());
-                
+
                 Map<String, Object> response = new HashMap<>();
                 response.put("accessToken", newAccessToken);
                 response.put("tokenType", "Bearer");
@@ -130,34 +120,33 @@ public class AuthenticationService {
      * Create user response object for authentication.
      *
      * @param user User entity
-     * @return user response map
+     * @return UserInfoDto
      */
-    private Map<String, Object> createUserResponse(User user) {
-        Map<String, Object> userResponse = new HashMap<>();
-        userResponse.put("id", user.getId());
-        userResponse.put("username", user.getUsername());
-        userResponse.put("email", user.getEmail());
-        userResponse.put("firstName", user.getFirstName());
-        userResponse.put("lastName", user.getLastName());
-        userResponse.put("role", user.getRole());
-        userResponse.put("isActive", user.getIsActive());
-        userResponse.put("emailVerified", user.getEmailVerified());
-        return userResponse;
+    private AuthResponseDto.UserInfoDto createUserResponse(User user) {
+        return AuthResponseDto.UserInfoDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole())
+                .isActive(user.getIsActive())
+                .emailVerified(user.getEmailVerified())
+                .build();
     }
 
     /**
      * Validate user credentials without generating tokens.
      *
      * @param usernameOrEmail username or email
-     * @param password password
+     * @param password        password
      * @return true if credentials are valid
      */
     @Transactional(readOnly = true)
     public boolean validateCredentials(String usernameOrEmail, String password) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(usernameOrEmail, password)
-            );
+                    new UsernamePasswordAuthenticationToken(usernameOrEmail, password));
             return true;
         } catch (AuthenticationException e) {
             return false;

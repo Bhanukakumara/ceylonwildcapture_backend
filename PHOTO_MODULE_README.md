@@ -1,59 +1,132 @@
-# Photo Module Testing Guide
+# Photo Module - Complete API Documentation
 
-This guide provides comprehensive testing instructions for the Photo Management Module in the Ceylon Wild Capture backend.
+**Ceylon Wild Capture Backend - Wildlife Photography Management System**
+
+This comprehensive documentation covers all API endpoints for the Photo Module, including photo management, categories, tags, and advanced search functionality.
+
+---
 
 ## 📋 Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Photo Management Endpoints](#photo-management-endpoints)
-3. [Category Management Endpoints](#category-management-endpoints)
-4. [Tag Management Endpoints](#tag-management-endpoints)
-5. [Testing with Postman](#testing-with-postman)
-6. [Testing with curl](#testing-with-curl)
-7. [Common Test Scenarios](#common-test-scenarios)
-8. [Troubleshooting](#troubleshooting)
+1. [Module Overview](#module-overview)
+2. [Data Models](#data-models)
+3. [Photo Management API](#photo-management-api)
+4. [Category Management API](#category-management-api)
+5. [Tag Management API](#tag-management-api)
+6. [Advanced Search API](#advanced-search-api)
+7. [Testing Guide](#testing-guide)
+8. [Best Practices](#best-practices)
 
-## 🚀 Prerequisites
+---
 
-### Required Software
-- **Java 25+**
-- **Maven 3.6+**
-- **MySQL 8.0+**
-- **Postman** or **curl** for API testing
+## 🔎 Module Overview
 
-### Environment Setup
-1. Set up MySQL database
-2. Configure `application.yml` with database credentials
-3. Set JWT secret environment variable:
-   ```bash
-   export JWT_SECRET="your-secret-key-here"
-   ```
+The Photo Module is the core component of the Ceylon Wild Capture platform, managing wildlife photography content, taxonomy, and search functionality.
 
-### Running the Application
-```bash
-# Build the project
-mvn clean install
+### Key Features
 
-# Run the application
-mvn spring-boot:run
-```
+- **Photo Upload & Management**: Multipart file upload with metadata
+- **EXIF Data Support**: Camera model, lens, aperture, ISO, shutter speed
+- **Multi-Tier Pricing**: Base, Commercial, Editorial, Extended licenses
+- **Approval Workflow**: Admin moderation before public visibility
+- **Category System**: Hierarchical organization with display ordering
+- **Tag System**: Flexible tagging with usage tracking and merge capabilities
+- **Advanced Search**: Complex filtering by location, price, EXIF data, dimensions
+- **Engagement Tracking**: Views, downloads, and likes
+- **Similar Photo Discovery**: Tag-based recommendations
 
-The application will start on `http://localhost:8080`
+### Controllers
 
-## 📷 Photo Management Endpoints
+1. **PhotoController** (`/api/v1/photos`) - Core photo CRUD operations
+2. **CategoryController** (`/api/v1/categories`) - Category management
+3. **TagController** (`/api/v1/tags`) - Tag management
+4. **PhotoSearchController** (`/api/v1/photos/search`) - Advanced search operations
 
-### 1. Upload Photo
-**Endpoint:** `POST /api/v1/photos/upload`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
+## 🗂️ Data Models
+
+### Photo Entity
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | Long | Auto-generated | Unique identifier |
+| `title` | String | 3-200 chars, required | Photo title |
+| `description` | String | Max 2000 chars | Detailed description |
+| `imageUrl` | String | - | High-resolution image URL |
+| `thumbnailUrl` | String | - | Optimized thumbnail URL |
+| `watermarkedUrl` | String | - | Watermarked preview URL |
+| `photographer` | User | Required | Photographer (User entity) |
+| `fileSize` | Long | - | File size in bytes |
+| `width` | Integer | - | Image width in pixels |
+| `height` | Integer | - | Image height in pixels |
+| `format` | String | Max 20 chars | Image format (jpg, png, etc.) |
+| `basePrice` | BigDecimal | Required, precision 10,2 | Standard license price |
+| `commercialPrice` | BigDecimal | Precision 10,2 | Commercial license price |
+| `editorialPrice` | BigDecimal | Precision 10,2 | Editorial license price |
+| `extendedPrice` | BigDecimal | Precision 10,2 | Extended license price |
+| `isApproved` | Boolean | Default: false | Admin approval status |
+| `isFeatured` | Boolean | Default: false | Featured on homepage |
+| `isActive` | Boolean | Default: true | Visibility flag |
+| `viewCount` | Integer | Default: 0 | Total views |
+| `downloadCount` | Integer | Default: 0 | Total downloads |
+| `likeCount` | Integer | Default: 0 | Total likes |
+| `location` | String | Max 200 chars | Capture location |
+| `cameraModel` | String | Max 100 chars | Camera model |
+| `lens` | String | Max 100 chars | Lens used |
+| `focalLength` | String | Max 20 chars | Focal length |
+| `aperture` | String | Max 20 chars | Aperture value |
+| `shutterSpeed` | String | Max 20 chars | Shutter speed |
+| `iso` | String | Max 20 chars | ISO value |
+| `captureDate` | LocalDateTime | - | Photo capture date |
+| `createdAt` | LocalDateTime | Auto-generated | Upload timestamp |
+| `updatedAt` | LocalDateTime | Auto-updated | Last update timestamp |
+| `tags` | List<Tag> | Many-to-Many | Associated tags |
+| `categories` | List<Category> | Many-to-Many | Associated categories |
+
+### Category Entity
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | Long | Auto-generated | Unique identifier |
+| `name` | String | 2-100 chars, unique, required | Category name |
+| `description` | String | Max 500 chars | Category description |
+| `slug` | String | Unique, max 100 chars | URL-friendly identifier |
+| `imageUrl` | String | - | Category cover image |
+| `isActive` | Boolean | Default: true | Visibility flag |
+| `displayOrder` | Integer | - | Sort order for UI |
+| `createdAt` | LocalDateTime | Auto-generated | Creation timestamp |
+| `updatedAt` | LocalDateTime | Auto-updated | Last update timestamp |
+
+### Tag Entity
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | Long | Auto-generated | Unique identifier |
+| `name` | String | 2-50 chars, unique, required | Tag name (lowercase) |
+| `description` | String | Max 200 chars | Tag description |
+| `usageCount` | Integer | Default: 0 | Number of photos using tag |
+| `createdAt` | LocalDateTime | Auto-generated | Creation timestamp |
+| `updatedAt` | LocalDateTime | Auto-updated | Last update timestamp |
+
+---
+
+## 📷 Photo Management API
+
+**Base Path:** `/api/v1/photos`
+
+### Upload & Creation
+
+#### 1. Upload Photo with File
+```http
+POST /api/v1/photos/upload
 Content-Type: multipart/form-data
+Authorization: Bearer {token}
 ```
 
-**Request (Multipart Form Data):**
-- **file** (file, required): The photo file to upload
-- **data** (JSON, required): Photo metadata
+**Request Parts:**
+- `file` (MultipartFile, required): Image file
+- `data` (JSON, required): Photo metadata
 
 **Photo Data JSON:**
 ```json
@@ -78,86 +151,41 @@ Content-Type: multipart/form-data
 }
 ```
 
-**Response:**
-```json
-{
-  "id": 1,
-  "title": "Sri Lankan Leopard in Yala",
-  "description": "A magnificent leopard spotted in Yala National Park",
-  "imageUrl": "photos/photo-123456789.jpg",
-  "thumbnailUrl": null,
-  "watermarkedUrl": null,
-  "photographerId": 1,
-  "photographerName": "John Doe",
-  "fileSize": null,
-  "width": null,
-  "height": null,
-  "format": null,
-  "basePrice": 50.00,
-  "commercialPrice": 150.00,
-  "editorialPrice": 100.00,
-  "extendedPrice": 250.00,
-  "isApproved": false,
-  "isFeatured": false,
-  "isActive": true,
-  "viewCount": 0,
-  "downloadCount": 0,
-  "likeCount": 0,
-  "location": "Yala National Park, Sri Lanka",
-  "cameraModel": "Canon EOS R5",
-  "lens": "RF 100-500mm f/4.5-7.1L IS USM",
-  "focalLength": "400mm",
-  "aperture": "f/5.6",
-  "shutterSpeed": "1/1000",
-  "iso": "800",
-  "captureDate": "2024-11-30T08:30:00",
-  "createdAt": "2024-11-30T10:00:00",
-  "updatedAt": "2024-11-30T10:00:00",
-  "tags": [...],
-  "categories": [...]
-}
-```
+**Response:** `201 Created` with `PhotoResponseDto`
 
-**Notes:**
-- File must be a valid image format (JPG, PNG, etc.)
-- Photo is created with `isApproved=false` and requires admin approval
-- If FileStorageService is not available, a placeholder URL will be used
+---
 
-### 2. Create Photo (Without File Upload)
-**Endpoint:** `POST /api/v1/photos`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 2. Create Photo (Metadata Only)
+```http
+POST /api/v1/photos
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
-**Request Body:**
-```json
-{
-  "title": "Elephant Herd",
-  "description": "Family of elephants crossing the road",
-  "photographerId": 1,
-  "basePrice": 40.00,
-  "location": "Udawalawe National Park",
-  "tagIds": [2, 5],
-  "categoryIds": [1]
-}
-```
+**Request Body:** Same as photo data above (without file)
 
-**Response:** Same as Upload Photo response
+**Response:** `201 Created` with `PhotoResponseDto`
 
-**Notes:**
-- Use this endpoint to create photo records without uploading files
-- Useful for batch imports or when files are already stored
+---
 
-### 3. Update Photo
-**Endpoint:** `PUT /api/v1/photos/{id}`
+### Update Operations
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 3. Update Photo (Full)
+```http
+PUT /api/v1/photos/{id}
 Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:** `PhotoUpdateDto` (all fields optional)
+
+---
+
+#### 4. Update Metadata Only
+```http
+PATCH /api/v1/photos/{id}/metadata
+Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -165,49 +193,17 @@ Content-Type: application/json
 {
   "title": "Updated Title",
   "description": "Updated description",
-  "basePrice": 60.00,
-  "commercialPrice": 180.00,
-  "location": "Updated Location",
-  "tagIds": [1, 2, 3, 4],
-  "categoryIds": [1, 2],
-  "isActive": true,
-  "isFeatured": false
+  "location": "Updated Location"
 }
 ```
 
-**Response:** Updated photo response DTO
+---
 
-**Notes:**
-- All fields are optional
-- Only provided fields will be updated
-
-### 4. Update Photo Metadata
-**Endpoint:** `PATCH /api/v1/photos/{id}/metadata`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 5. Update Pricing Only
+```http
+PATCH /api/v1/photos/{id}/pricing
 Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "title": "New Title",
-  "description": "New description",
-  "location": "New Location"
-}
-```
-
-**Response:** Updated photo response DTO
-
-### 5. Update Photo Pricing
-**Endpoint:** `PATCH /api/v1/photos/{id}/pricing`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -220,15 +216,13 @@ Content-Type: application/json
 }
 ```
 
-**Response:** Updated photo response DTO
+---
 
-### 6. Update Photo EXIF Data
-**Endpoint:** `PATCH /api/v1/photos/{id}/exif`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 6. Update EXIF Data Only
+```http
+PATCH /api/v1/photos/{id}/exif
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -244,272 +238,184 @@ Content-Type: application/json
 }
 ```
 
-**Response:** Updated photo response DTO
+---
 
-### 7. Get Photo by ID
-**Endpoint:** `GET /api/v1/photos/{id}`
+### Retrieval Operations
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:** Photo response DTO with all details
-
-### 8. Get Photo with Photographer Details
-**Endpoint:** `GET /api/v1/photos/{id}/with-photographer`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 7. Get Photo by ID
+```http
+GET /api/v1/photos/{id}
+Authorization: Bearer {token}
 ```
 
-**Response:** Photo response DTO with photographer information eagerly loaded
+**Response:** `200 OK` with `PhotoResponseDto` or `404 Not Found`
 
-### 9. Get All Photos (Paginated)
-**Endpoint:** `GET /api/v1/photos?page=0&size=20&sort=createdAt,desc`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "content": [...],
-  "pageable": {...},
-  "totalElements": 150,
-  "totalPages": 8,
-  "size": 20,
-  "number": 0
-}
+#### 8. Get Photo with Photographer Details
+```http
+GET /api/v1/photos/{id}/with-photographer
+Authorization: Bearer {token}
 ```
 
-### 10. Get Photos by Photographer
-**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}?page=0&size=20`
+**Response:** `200 OK` with `PhotoResponseDto` (photographer eagerly loaded)
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
+---
 
-**Response:** Paginated list of photos by photographer
-
-### 11. Get Approved Photos by Photographer
-**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/approved?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 9. Get All Photos (Paginated)
+```http
+GET /api/v1/photos?page=0&size=20&sort=createdAt,desc
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of approved photos by photographer
+**Response:** `Page<PhotoResponseDto>`
 
-### 12. Get Approved and Active Photos
-**Endpoint:** `GET /api/v1/photos/approved-active?page=0&size=20`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:** Paginated list of photos that are both approved and active
-
-**Notes:**
-- This endpoint is typically used for public gallery display
-
-### 13. Get Featured Photos
-**Endpoint:** `GET /api/v1/photos/featured?page=0&size=10`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 10. Get Photos by Photographer
+```http
+GET /api/v1/photos/photographer/{photographerId}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of featured photos
+---
 
-### 14. Get Pending Approval Photos
-**Endpoint:** `GET /api/v1/photos/pending-approval?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 11. Get Approved Photos by Photographer
+```http
+GET /api/v1/photos/photographer/{photographerId}/approved?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos awaiting approval
+---
 
-**Notes:**
-- Typically restricted to admin users
-
-### 15. Get Most Viewed Photos
-**Endpoint:** `GET /api/v1/photos/most-viewed?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 12. Get Approved & Active Photos (Public Feed)
+```http
+GET /api/v1/photos/approved-active?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos ordered by view count (descending)
+---
 
-### 16. Get Most Downloaded Photos
-**Endpoint:** `GET /api/v1/photos/most-downloaded?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 13. Get Featured Photos
+```http
+GET /api/v1/photos/featured?page=0&size=10
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos ordered by download count (descending)
+---
 
-### 17. Get Most Liked Photos
-**Endpoint:** `GET /api/v1/photos/most-liked?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 14. Get Pending Approval Photos
+```http
+GET /api/v1/photos/pending-approval?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos ordered by like count (descending)
+---
 
-### 18. Get Recently Uploaded Photos
-**Endpoint:** `GET /api/v1/photos/recent?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 15. Get Most Viewed Photos
+```http
+GET /api/v1/photos/most-viewed?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos ordered by upload date (descending)
+---
 
-### 19. Get Similar Photos
-**Endpoint:** `GET /api/v1/photos/{id}/similar?limit=10`
-
-**Headers:**
+#### 16. Get Most Downloaded Photos
+```http
+GET /api/v1/photos/most-downloaded?page=0&size=20
+Authorization: Bearer {token}
 ```
-Authorization: Bearer {access_token}
+
+---
+
+#### 17. Get Most Liked Photos
+```http
+GET /api/v1/photos/most-liked?page=0&size=20
+Authorization: Bearer {token}
+```
+
+---
+
+#### 18. Get Recently Uploaded Photos
+```http
+GET /api/v1/photos/recent?page=0&size=20
+Authorization: Bearer {token}
+```
+
+---
+
+#### 19. Get Similar Photos
+```http
+GET /api/v1/photos/{id}/similar?limit=10
+Authorization: Bearer {token}
 ```
 
 **Query Parameters:**
-- `limit` (optional): Number of similar photos to return (default: 10, minimum: 1)
+- `limit` (optional, default: 10, min: 1): Number of similar photos
 
-**Response:**
-```json
-[
-  {...},
-  {...},
-  {...}
-]
+**Response:** `List<PhotoResponseDto>`
+
+---
+
+### Filtering Operations
+
+#### 20. Get Photos by Tag
+```http
+GET /api/v1/photos/by-tag/{tagName}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Notes:**
-- Finds similar photos based on shared tags
-- Returns approved and active photos only
+---
 
-### 20. Get Photos by Tag
-**Endpoint:** `GET /api/v1/photos/by-tag/{tagName}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 21. Get Photos by Category
+```http
+GET /api/v1/photos/by-category/{categorySlug}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Example:**
-```
-GET /api/v1/photos/by-tag/leopard?page=0&size=20
-```
+---
 
-**Response:** Paginated list of photos with the specified tag
-
-### 21. Get Photos by Category
-**Endpoint:** `GET /api/v1/photos/by-category/{categorySlug}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-GET /api/v1/photos/by-category/wildlife?page=0&size=20
-```
-
-**Response:** Paginated list of photos in the specified category
-
-### 22. Get Photos by Location
-**Endpoint:** `GET /api/v1/photos/by-location?location={location}&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
+#### 22. Get Photos by Location
+```http
 GET /api/v1/photos/by-location?location=Yala&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos from the specified location
+---
 
-**Notes:**
-- Search is case-insensitive and uses partial matching
-
-### 23. Get Photos by Price Range
-**Endpoint:** `GET /api/v1/photos/by-price-range?minPrice=10.00&maxPrice=100.00&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 23. Get Photos by Price Range
+```http
+GET /api/v1/photos/by-price-range?minPrice=10.00&maxPrice=100.00&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `minPrice` (required): Minimum base price
-- `maxPrice` (required): Maximum base price
-- Standard pagination parameters
+---
 
-**Response:** Paginated list of photos within the price range
-
-### 24. Get Photos Uploaded Between Dates
-**Endpoint:** `GET /api/v1/photos/uploaded-between?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 24. Get Photos Uploaded Between Dates
+```http
+GET /api/v1/photos/uploaded-between?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `startDate` (required): Start date in ISO format
-- `endDate` (required): End date in ISO format
-- Standard pagination parameters
+---
 
-**Response:** Paginated list of photos uploaded within the date range
+### Search Operations
 
-### 25. Search Photos
-**Endpoint:** `GET /api/v1/photos/search?q={searchTerm}&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
+#### 25. Simple Search
+```http
 GET /api/v1/photos/search?q=leopard&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Paginated list of photos matching the search term
+**Searches:** Title and description fields
 
-**Notes:**
-- Searches in both title and description
-- Case-insensitive search
+---
 
-### 26. Advanced Search
-**Endpoint:** `POST /api/v1/photos/advanced-search?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 26. Advanced Search
+```http
+POST /api/v1/photos/advanced-search?page=0&size=20
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -532,85 +438,63 @@ Content-Type: application/json
 }
 ```
 
-**Response:** Paginated list of photos matching all specified criteria
+---
 
-**Notes:**
-- All criteria are optional
-- Multiple criteria are combined with AND logic
+### Status Management
 
-### 27. Deactivate Photo
-**Endpoint:** `PATCH /api/v1/photos/{id}/deactivate`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 27. Deactivate Photo
+```http
+PATCH /api/v1/photos/{id}/deactivate
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with `isActive=false`
+---
 
-### 28. Activate Photo
-**Endpoint:** `PATCH /api/v1/photos/{id}/activate`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 28. Activate Photo
+```http
+PATCH /api/v1/photos/{id}/activate
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with `isActive=true`
+---
 
-### 29. Approve Photo
-**Endpoint:** `PATCH /api/v1/photos/{id}/approve`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 29. Approve Photo (Admin)
+```http
+PATCH /api/v1/photos/{id}/approve
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with `isApproved=true`
+---
 
-**Notes:**
-- Typically restricted to admin users
-
-### 30. Reject Photo
-**Endpoint:** `PATCH /api/v1/photos/{id}/reject?reason={reason}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 30. Reject Photo (Admin)
+```http
+PATCH /api/v1/photos/{id}/reject?reason=Image%20quality%20too%20low
+Authorization: Bearer {token}
 ```
 
 **Query Parameters:**
-- `reason` (required): Reason for rejection
+- `reason` (required): Rejection reason
 
-**Example:**
-```
-PATCH /api/v1/photos/1/reject?reason=Image%20quality%20too%20low
-```
+---
 
-**Response:** Updated photo with `isApproved=false` and `isActive=false`
-
-### 31. Set Featured Status
-**Endpoint:** `PATCH /api/v1/photos/{id}/featured?featured={true|false}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 31. Set Featured Status (Admin)
+```http
+PATCH /api/v1/photos/{id}/featured?featured=true
+Authorization: Bearer {token}
 ```
 
-**Example:**
-```
-PATCH /api/v1/photos/1/featured?featured=true
-```
+**Query Parameters:**
+- `featured` (required): true or false
 
-**Response:** Updated photo with featured status
+---
 
-### 32. Assign Tags to Photo
-**Endpoint:** `PUT /api/v1/photos/{id}/tags`
+### Tag & Category Management
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 32. Assign Tags (Replace All)
+```http
+PUT /api/v1/photos/{id}/tags
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -618,46 +502,29 @@ Content-Type: application/json
 [1, 2, 3, 5, 8]
 ```
 
-**Response:** Updated photo with new tag assignments
+---
 
-**Notes:**
-- Replaces all existing tags
-- To add a single tag, use the Add Tag endpoint
-
-### 33. Add Tag to Photo
-**Endpoint:** `POST /api/v1/photos/{id}/tags/{tagId}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 33. Add Single Tag
+```http
+POST /api/v1/photos/{id}/tags/{tagId}
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with the tag added
+---
 
-**Notes:**
-- Increments the tag's usage count
-- If tag already exists on photo, no change occurs
-
-### 34. Remove Tag from Photo
-**Endpoint:** `DELETE /api/v1/photos/{id}/tags/{tagId}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 34. Remove Tag
+```http
+DELETE /api/v1/photos/{id}/tags/{tagId}
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with the tag removed
+---
 
-**Notes:**
-- Decrements the tag's usage count
-
-### 35. Assign Categories to Photo
-**Endpoint:** `PUT /api/v1/photos/{id}/categories`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 35. Assign Categories (Replace All)
+```http
+PUT /api/v1/photos/{id}/categories
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -665,181 +532,650 @@ Content-Type: application/json
 [1, 2, 4]
 ```
 
-**Response:** Updated photo with new category assignments
+---
 
-**Notes:**
-- Replaces all existing categories
-
-### 36. Add Category to Photo
-**Endpoint:** `POST /api/v1/photos/{id}/categories/{categoryId}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 36. Add Single Category
+```http
+POST /api/v1/photos/{id}/categories/{categoryId}
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with the category added
+---
 
-### 37. Remove Category from Photo
-**Endpoint:** `DELETE /api/v1/photos/{id}/categories/{categoryId}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 37. Remove Category
+```http
+DELETE /api/v1/photos/{id}/categories/{categoryId}
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with the category removed
+---
 
-### 38. Increment View Count
-**Endpoint:** `POST /api/v1/photos/{id}/increment-views`
+### Engagement Tracking
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:** Updated photo with incremented view count
-
-**Notes:**
-- Call this when a photo is viewed/displayed
-
-### 39. Increment Download Count
-**Endpoint:** `POST /api/v1/photos/{id}/increment-downloads`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 38. Increment View Count
+```http
+POST /api/v1/photos/{id}/increment-views
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with incremented download count
+---
 
-**Notes:**
-- Call this when a photo is downloaded
-
-### 40. Like Photo
-**Endpoint:** `POST /api/v1/photos/{id}/like`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 39. Increment Download Count
+```http
+POST /api/v1/photos/{id}/increment-downloads
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with incremented like count
+---
 
-### 41. Unlike Photo
-**Endpoint:** `POST /api/v1/photos/{id}/unlike`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 40. Like Photo
+```http
+POST /api/v1/photos/{id}/like
+Authorization: Bearer {token}
 ```
 
-**Response:** Updated photo with decremented like count
+---
 
-### 42. Count Photos by Photographer
-**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/count`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 41. Unlike Photo
+```http
+POST /api/v1/photos/{id}/unlike
+Authorization: Bearer {token}
 ```
 
-**Response:**
-```json
-125
+---
+
+### Statistics
+
+#### 42. Count Photos by Photographer
+```http
+GET /api/v1/photos/photographer/{photographerId}/count
+Authorization: Bearer {token}
 ```
 
-### 43. Count Approved Photos by Photographer
-**Endpoint:** `GET /api/v1/photos/photographer/{photographerId}/count-approved`
+**Response:** `Long` (count)
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
+---
 
-**Response:**
-```json
-98
+#### 43. Count Approved Photos by Photographer
+```http
+GET /api/v1/photos/photographer/{photographerId}/count-approved
+Authorization: Bearer {token}
 ```
 
-### 44. Count Pending Approval Photos
-**Endpoint:** `GET /api/v1/photos/count-pending`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-27
+#### 44. Count Pending Approval Photos
+```http
+GET /api/v1/photos/count-pending
+Authorization: Bearer {token}
 ```
 
-### 45. Count Total Photos
-**Endpoint:** `GET /api/v1/photos/count`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-1547
+#### 45. Count Total Photos
+```http
+GET /api/v1/photos/count
+Authorization: Bearer {token}
 ```
 
-### 46. Process Uploaded Photo
-**Endpoint:** `POST /api/v1/photos/{id}/process`
+---
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
+### Utility Operations
 
-**Response:** Updated photo after processing
-
-**Notes:**
-- Placeholder for image processing (thumbnails, watermarks, EXIF extraction)
-- Requires ImageProcessingService implementation
-
-### 47. Check Photo Exists
-**Endpoint:** `GET /api/v1/photos/{id}/exists`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 46. Process Uploaded Photo
+```http
+POST /api/v1/photos/{id}/process
+Authorization: Bearer {token}
 ```
 
-**Response:**
-```json
-true
+**Note:** Triggers image processing (thumbnails, watermarks, EXIF extraction)
+
+---
+
+#### 47. Check Photo Exists
+```http
+GET /api/v1/photos/{id}/exists
+Authorization: Bearer {token}
 ```
 
-### 48. Delete Photo
-**Endpoint:** `DELETE /api/v1/photos/{id}`
+**Response:** `Boolean`
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
+---
+
+#### 48. Delete Photo
+```http
+DELETE /api/v1/photos/{id}
+Authorization: Bearer {token}
 ```
 
 **Response:** `204 No Content`
 
-**Notes:**
-- Deletes the photo record and associated files from storage
-- Cannot be undone
+---
+
+## 📂 Category Management API
+
+**Base Path:** `/api/v1/categories`
+
+### CRUD Operations
+
+#### 1. Create Category
+```http
+POST /api/v1/categories
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "name": "Wildlife",
+  "description": "Wildlife photography from Sri Lanka",
+  "slug": "wildlife",
+  "imageUrl": "https://example.com/wildlife.jpg",
+  "isActive": true,
+  "displayOrder": 1
+}
+```
+
+**Note:** `slug` is auto-generated from `name` if not provided
 
 ---
 
-## 🔍 Advanced Photo Search Endpoints
-
-### 1. Search with Multiple Filters
-**Endpoint:** `POST /api/v1/photos/search/filters?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 2. Update Category (Full)
+```http
+PUT /api/v1/categories/{id}
 Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:** `CategoryUpdateDto`
+
+---
+
+#### 3. Update Category Info (Partial)
+```http
+PATCH /api/v1/categories/{id}/info?name=Wildlife&description=Updated%20description
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `name` (optional): New category name
+- `description` (optional): New description
+
+---
+
+#### 4. Update Category Image
+```http
+PATCH /api/v1/categories/{id}/image?imageUrl=https://example.com/new-image.jpg
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `imageUrl` (required): New image URL
+
+---
+
+#### 5. Update Display Order
+```http
+PATCH /api/v1/categories/{id}/order?displayOrder=5
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `displayOrder` (required, min: 0): New display order
+
+---
+
+### Retrieval Operations
+
+#### 6. Get Category by ID
+```http
+GET /api/v1/categories/{id}
+Authorization: Bearer {token}
+```
+
+**Response:** `200 OK` with `CategoryResponseDto` or `404 Not Found`
+
+---
+
+#### 7. Get Category by Slug
+```http
+GET /api/v1/categories/slug/{slug}
+Authorization: Bearer {token}
+```
+
+---
+
+#### 8. Get Category by Name
+```http
+GET /api/v1/categories/name/{name}
+Authorization: Bearer {token}
+```
+
+---
+
+#### 9. Get All Categories (Paginated)
+```http
+GET /api/v1/categories?page=0&size=10&sort=displayOrder,asc
+Authorization: Bearer {token}
+```
+
+---
+
+#### 10. Get Active Categories (Paginated)
+```http
+GET /api/v1/categories/active?page=0&size=10
+Authorization: Bearer {token}
+```
+
+---
+
+#### 11. Get Active Categories (List)
+```http
+GET /api/v1/categories/active/list
+Authorization: Bearer {token}
+```
+
+**Response:** `List<CategoryResponseDto>`
+
+---
+
+#### 12. Get Ordered Categories
+```http
+GET /api/v1/categories/ordered
+Authorization: Bearer {token}
+```
+
+**Response:** All categories ordered by `displayOrder`
+
+---
+
+#### 13. Get Active Ordered Categories
+```http
+GET /api/v1/categories/active/ordered
+Authorization: Bearer {token}
+```
+
+---
+
+#### 14. Search Categories
+```http
+GET /api/v1/categories/search?q=wild&page=0&size=10
+Authorization: Bearer {token}
+```
+
+---
+
+#### 15. Get Empty Categories
+```http
+GET /api/v1/categories/empty
+Authorization: Bearer {token}
+```
+
+**Response:** Categories with no associated photos
+
+---
+
+#### 16. Get Categories with Photo Count
+```http
+GET /api/v1/categories/with-photo-count?page=0&size=10
+Authorization: Bearer {token}
+```
+
+**Response:** `Page<Object[]>` where each element is `[CategoryResponseDto, Long photoCount]`
+
+---
+
+### Statistics
+
+#### 17. Count Active Categories
+```http
+GET /api/v1/categories/counts/active
+Authorization: Bearer {token}
+```
+
+---
+
+#### 18. Count Total Categories
+```http
+GET /api/v1/categories/counts/total
+Authorization: Bearer {token}
+```
+
+---
+
+### Bulk Operations
+
+#### 19. Reorder Categories
+```http
+POST /api/v1/categories/reorder
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+[
+  {"id": 1, "displayOrder": 3},
+  {"id": 2, "displayOrder": 1},
+  {"id": 3, "displayOrder": 2}
+]
+```
+
+---
+
+### Status Management
+
+#### 20. Activate Category
+```http
+POST /api/v1/categories/{id}/activate
+Authorization: Bearer {token}
+```
+
+---
+
+#### 21. Deactivate Category
+```http
+POST /api/v1/categories/{id}/deactivate
+Authorization: Bearer {token}
+```
+
+---
+
+#### 22. Delete Category
+```http
+DELETE /api/v1/categories/{id}
+Authorization: Bearer {token}
+```
+
+**Response:** `204 No Content`
+
+**Note:** Cannot delete categories with associated photos
+
+---
+
+## 🏷️ Tag Management API
+
+**Base Path:** `/api/v1/tags`
+
+### CRUD Operations
+
+#### 1. Create Tag
+```http
+POST /api/v1/tags
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "name": "leopard",
+  "description": "Photos featuring leopards"
+}
+```
+
+**Note:** Tag names are automatically normalized to lowercase
+
+---
+
+#### 2. Create Tag (Simple)
+```http
+POST /api/v1/tags/simple?name=elephant
+Authorization: Bearer {token}
+```
+
+---
+
+#### 3. Update Tag
+```http
+PUT /api/v1/tags/{id}
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "name": "sri-lankan-leopard",
+  "description": "Endemic leopard subspecies"
+}
+```
+
+---
+
+#### 4. Update Tag Description
+```http
+PATCH /api/v1/tags/{id}/description?description=Updated%20description
+Authorization: Bearer {token}
+```
+
+---
+
+#### 5. Rename Tag
+```http
+PATCH /api/v1/tags/{id}/rename?newName=leopard-kotiya
+Authorization: Bearer {token}
+```
+
+---
+
+### Retrieval Operations
+
+#### 6. Get Tag by ID
+```http
+GET /api/v1/tags/{id}
+Authorization: Bearer {token}
+```
+
+---
+
+#### 7. Get Tag by Name
+```http
+GET /api/v1/tags/name/{name}
+Authorization: Bearer {token}
+```
+
+---
+
+#### 8. Get All Tags (Paginated)
+```http
+GET /api/v1/tags?page=0&size=10&sort=name,asc
+Authorization: Bearer {token}
+```
+
+---
+
+#### 9. Get Top Tags
+```http
+GET /api/v1/tags/top?limit=10
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `limit` (optional, default: 10, min: 1): Number of top tags
+
+**Response:** Tags ordered by `usageCount` descending
+
+---
+
+#### 10. Get Popular Tags
+```http
+GET /api/v1/tags/popular?minUsageCount=10
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `minUsageCount` (optional, default: 1, min: 0): Minimum usage threshold
+
+---
+
+#### 11. Get Unused Tags
+```http
+GET /api/v1/tags/unused
+Authorization: Bearer {token}
+```
+
+**Response:** Tags with `usageCount = 0`
+
+---
+
+#### 12. Search Tags
+```http
+GET /api/v1/tags/search?q=leo&page=0&size=10
+Authorization: Bearer {token}
+```
+
+---
+
+### Bulk Operations
+
+#### 13. Get Tags by IDs
+```http
+POST /api/v1/tags/by-ids
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+[1, 2, 5, 10]
+```
+
+---
+
+#### 14. Get Tags by Names
+```http
+POST /api/v1/tags/by-names
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+["leopard", "elephant", "whale"]
+```
+
+---
+
+#### 15. Get or Create Tags by Names
+```http
+POST /api/v1/tags/get-or-create
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+["leopard", "new-species", "elephant"]
+```
+
+**Note:** Creates tags that don't exist, returns existing ones
+
+---
+
+### Statistics & Maintenance
+
+#### 16. Count Total Tags
+```http
+GET /api/v1/tags/count
+Authorization: Bearer {token}
+```
+
+---
+
+#### 17. Increment Usage Count
+```http
+POST /api/v1/tags/{id}/increment-usage
+Authorization: Bearer {token}
+```
+
+---
+
+#### 18. Decrement Usage Count
+```http
+POST /api/v1/tags/{id}/decrement-usage
+Authorization: Bearer {token}
+```
+
+---
+
+#### 19. Recalculate Usage Counts
+```http
+POST /api/v1/tags/recalculate-usage
+Authorization: Bearer {token}
+```
+
+**Response:** `Long` (number of tags updated)
+
+**Note:** Syncs usage counts with actual photo associations
+
+---
+
+#### 20. Merge Tags
+```http
+POST /api/v1/tags/merge
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "sourceTagIds": [5, 10, 15],
+  "targetTagId": 1
+}
+```
+
+**Note:** Moves all photo associations to target tag, deletes source tags
+
+---
+
+### Deletion Operations
+
+#### 21. Delete Tag
+```http
+DELETE /api/v1/tags/{id}
+Authorization: Bearer {token}
+```
+
+**Response:** `204 No Content`
+
+---
+
+#### 22. Delete Unused Tags
+```http
+DELETE /api/v1/tags/unused
+Authorization: Bearer {token}
+```
+
+**Response:** `Long` (number of deleted tags)
+
+---
+
+### Utility Operations
+
+#### 23. Check Tag Exists
+```http
+GET /api/v1/tags/exists?name=leopard
+Authorization: Bearer {token}
+```
+
+**Response:** `Boolean`
+
+---
+
+## 🔍 Advanced Search API
+
+**Base Path:** `/api/v1/photos/search`
+
+### Multi-Filter Search
+
+#### 1. Search with Multiple Filters
+```http
+POST /api/v1/photos/search/filters?page=0&size=20
+Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -854,392 +1190,229 @@ Content-Type: application/json
   "photographerId": 5,
   "isApproved": true,
   "isActive": true,
-  "isFeatured": false,
   "uploadStartDate": "2024-01-01T00:00:00",
   "uploadEndDate": "2024-12-31T23:59:59",
-  "captureStartDate": "2024-01-01T00:00:00",
-  "captureEndDate": "2024-12-31T23:59:59",
   "cameraModel": "Canon EOS R5",
-  "lens": "RF 100-500mm",
-  "isoRange": "100-800",
-  "apertureRange": "f/2.8-f/5.6",
-  "orientation": "LANDSCAPE",
   "minWidth": 1920,
   "minHeight": 1080
 }
 ```
 
-**Response:** Paginated list of photos matching all specified filters
+---
 
-**Notes:**
-- All fields are optional
-- Multiple filters are combined with AND logic
+### Tag-Based Search
 
-### 2. Search by All Tags (AND)
-**Endpoint:** `GET /api/v1/photos/search/tags/all?tags=leopard&tags=yala&tags=wildlife&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 2. Search by All Tags (AND Logic)
+```http
+GET /api/v1/photos/search/tags/all?tags=leopard&tags=yala&tags=wildlife&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Photos that have ALL specified tags
+**Note:** Returns photos that have ALL specified tags
 
-**Notes:**
-- Use multiple `tags` query parameters
-- Returns only photos that contain every specified tag
+---
 
-### 3. Search by Any Tags (OR)
-**Endpoint:** `GET /api/v1/photos/search/tags/any?tags=leopard&tags=elephant&tags=whale&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 3. Search by Any Tags (OR Logic)
+```http
+GET /api/v1/photos/search/tags/any?tags=leopard&tags=elephant&tags=whale&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Photos that have ANY of the specified tags
+**Note:** Returns photos that have ANY of the specified tags
 
-**Notes:**
-- Use multiple `tags` query parameters
-- Returns photos that contain at least one of the specified tags
+---
 
-### 4. Search by Multiple Categories
-**Endpoint:** `GET /api/v1/photos/search/categories?slugs=wildlife&slugs=nature&slugs=landscape&page=0&size=20`
+### Category-Based Search
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 4. Search by Multiple Categories
+```http
+GET /api/v1/photos/search/categories?slugs=wildlife&slugs=nature&slugs=landscape&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Photos belonging to any of the specified categories
+---
 
-**Notes:**
-- Use category slugs instead of IDs
-- Use multiple `slugs` query parameters
+### Combined Searches
 
-### 5. Search by Photographer and Tags
-**Endpoint:** `GET /api/v1/photos/search/photographer/{photographerId}/tags?tags=leopard&tags=wildlife&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 5. Search by Photographer and Tags
+```http
+GET /api/v1/photos/search/photographer/{photographerId}/tags?tags=leopard&tags=wildlife&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Example:**
-```
-GET /api/v1/photos/search/photographer/5/tags?tags=leopard&tags=wildlife&page=0&size=20
-```
+---
 
-**Response:** Photos by specific photographer that have all specified tags
-
-### 6. Search by Location and Price Range
-**Endpoint:** `GET /api/v1/photos/search/location-price?location=Yala&minPrice=10.00&maxPrice=100.00&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 6. Search by Location and Price Range
+```http
+GET /api/v1/photos/search/location-price?location=Yala&minPrice=10.00&maxPrice=100.00&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `location` (required): Location to search
-- `minPrice` (optional): Minimum price
-- `maxPrice` (optional): Maximum price
+---
 
-**Response:** Photos from specified location within price range
+### Date-Based Search
 
-### 7. Search by Capture Date Range
-**Endpoint:** `GET /api/v1/photos/search/capture-date-range?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 7. Search by Capture Date Range
+```http
+GET /api/v1/photos/search/capture-date-range?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `startDate` (required): Start date in ISO format
-- `endDate` (required): End date in ISO format
+---
 
-**Response:** Photos captured within the specified date range
+### EXIF-Based Search
 
-### 8. Search by Camera Model
-**Endpoint:** `GET /api/v1/photos/search/camera?model=Canon%20EOS%20R5&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 8. Search by Camera Model
+```http
+GET /api/v1/photos/search/camera?model=Canon%20EOS%20R5&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Photos taken with specified camera model
+---
 
-### 9. Search by Lens
-**Endpoint:** `GET /api/v1/photos/search/lens?lens=RF%20100-500mm&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 9. Search by Lens
+```http
+GET /api/v1/photos/search/lens?lens=RF%20100-500mm&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Photos taken with specified lens
+---
 
-### 10. Search by ISO Range
-**Endpoint:** `GET /api/v1/photos/search/iso?range=100-800&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 10. Search by ISO Range
+```http
+GET /api/v1/photos/search/iso?range=100-800&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `range` (required): ISO range (e.g., "100-800", "1600-3200")
+---
 
-**Response:** Photos within specified ISO range
-
-### 11. Search by Aperture Range
-**Endpoint:** `GET /api/v1/photos/search/aperture?range=f/2.8-f/5.6&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 11. Search by Aperture Range
+```http
+GET /api/v1/photos/search/aperture?range=f/2.8-f/5.6&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `range` (required): Aperture range (e.g., "f/2.8-f/5.6")
+---
 
-**Response:** Photos within specified aperture range
+### Dimension-Based Search
 
-### 12. Search by Orientation
-**Endpoint:** `GET /api/v1/photos/search/orientation/{orientation}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 12. Search by Orientation
+```http
+GET /api/v1/photos/search/orientation/{orientation}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
 **Path Parameters:**
 - `orientation`: LANDSCAPE, PORTRAIT, or SQUARE
 
-**Example:**
-```
-GET /api/v1/photos/search/orientation/LANDSCAPE?page=0&size=20
-```
+---
 
-**Response:** Photos with specified orientation
-
-### 13. Search by Minimum Dimensions
-**Endpoint:** `GET /api/v1/photos/search/dimensions?minWidth=1920&minHeight=1080&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 13. Search by Minimum Dimensions
+```http
+GET /api/v1/photos/search/dimensions?minWidth=1920&minHeight=1080&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `minWidth` (optional): Minimum width in pixels
-- `minHeight` (optional): Minimum height in pixels
+---
 
-**Response:** Photos meeting minimum dimension requirements
+### Popularity & Trending
 
-### 14. Get Popular Photos
-**Endpoint:** `GET /api/v1/photos/search/popular/{metric}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 14. Get Popular Photos
+```http
+GET /api/v1/photos/search/popular/{metric}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
 **Path Parameters:**
 - `metric`: views, downloads, or likes
 
-**Example:**
-```
-GET /api/v1/photos/search/popular/views?page=0&size=20
-```
+---
 
-**Response:** Photos ordered by specified popularity metric (descending)
-
-### 15. Get Trending Photos
-**Endpoint:** `GET /api/v1/photos/search/trending?days=7&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 15. Get Trending Photos
+```http
+GET /api/v1/photos/search/trending?days=7&page=0&size=20
+Authorization: Bearer {token}
 ```
 
 **Query Parameters:**
-- `days` (optional): Number of days to look back (default: 7, minimum: 1)
+- `days` (optional, default: 7, min: 1): Lookback period
 
-**Response:** Photos with highest engagement in recent days
+---
 
-**Notes:**
-- Considers views, downloads, and likes in recent time period
-
-### 16. Get Recommended Photos
-**Endpoint:** `GET /api/v1/photos/search/recommended/{userId}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 16. Get Recommended Photos
+```http
+GET /api/v1/photos/search/recommended/{userId}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Example:**
-```
-GET /api/v1/photos/search/recommended/10?page=0&size=20
-```
+**Note:** Personalized recommendations based on user preferences
 
-**Response:** Personalized photo recommendations for user
+---
 
-**Notes:**
-- Based on user's browsing history and preferences
+### Price-Based Search
 
-### 17. Get Photos by Price Tier
-**Endpoint:** `GET /api/v1/photos/search/price-tier/{tier}?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 17. Get Photos by Price Tier
+```http
+GET /api/v1/photos/search/price-tier/{tier}?page=0&size=20
+Authorization: Bearer {token}
 ```
 
 **Path Parameters:**
 - `tier`: BUDGET, STANDARD, PREMIUM, or LUXURY
 
-**Example:**
-```
-GET /api/v1/photos/search/price-tier/PREMIUM?page=0&size=20
-```
+---
 
-**Response:** Photos in specified price tier
+### Text Search
 
-### 18. Full-Text Search
-**Endpoint:** `GET /api/v1/photos/search/full-text?query=wildlife%20sri%20lanka&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 18. Full-Text Search
+```http
+GET /api/v1/photos/search/full-text?query=wildlife%20sri%20lanka&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `query` (required): Full-text search query
+**Note:** Searches across title, description, location, tags, and categories
 
-**Response:** Photos matching full-text search across all text fields
+---
 
-**Notes:**
-- Searches in title, description, location, tags, and categories
+### Filtered Searches
 
-### 19. Filter Approved Photos
-**Endpoint:** `POST /api/v1/photos/search/approved?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 19. Filter Approved Photos
+```http
+POST /api/v1/photos/search/approved?page=0&size=20
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
-**Request Body:**
-```json
-{
-  "keyword": "wildlife",
-  "categorySlugs": ["nature", "wildlife"],
-  "tagNames": ["leopard", "elephant"],
-  "minPrice": 10.00,
-  "maxPrice": 100.00,
-  "location": "Yala",
-  "photographerId": 5,
-  "orientation": "LANDSCAPE",
-  "minWidth": 1920,
-  "minHeight": 1080,
-  "cameraModel": "Canon EOS R5"
-}
+**Request Body:** `PhotoSearchCriteria` (automatically filters for approved photos)
+
+---
+
+#### 20. Get Recent Photos by Photographer
+```http
+GET /api/v1/photos/search/photographer/{photographerId}/recent?days=30&page=0&size=20
+Authorization: Bearer {token}
 ```
 
-**Response:** Approved photos matching search criteria
+---
 
-**Notes:**
-- Automatically filters for approved photos only
-- All fields are optional
+### Comprehensive Search
 
-### 20. Get Recent Photos by Photographer
-**Endpoint:** `GET /api/v1/photos/search/photographer/{photographerId}/recent?days=30&page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `days` (optional): Number of days to look back (default: 30, minimum: 1)
-
-**Example:**
-```
-GET /api/v1/photos/search/photographer/5/recent?days=7&page=0&size=20
-```
-
-**Response:** Recent photos by specified photographer
-
-### 21. Comprehensive Search with Criteria
-**Endpoint:** `POST /api/v1/photos/search/comprehensive?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 21. Comprehensive Search with Criteria
+```http
+POST /api/v1/photos/search/comprehensive?page=0&size=20
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
-**Request Body:**
-```json
-{
-  "keyword": "wildlife",
-  "categoryIds": [1, 2],
-  "categorySlugs": ["nature", "wildlife"],
-  "tagNames": ["leopard", "elephant"],
-  "tagIds": [1, 2, 3],
-  "photographerId": 5,
-  "minPrice": 10.00,
-  "maxPrice": 100.00,
-  "location": "Yala National Park",
-  "cameraModel": "Canon EOS R5",
-  "uploadStartDate": "2024-01-01T00:00:00",
-  "uploadEndDate": "2024-12-31T23:59:59",
-  "captureStartDate": "2024-01-01T00:00:00",
-  "captureEndDate": "2024-12-31T23:59:59",
-  "isApproved": true,
-  "isActive": true,
-  "isFeatured": false,
-  "minViewCount": 100,
-  "minDownloadCount": 10,
-  "minLikeCount": 50,
-  "format": "jpg",
-  "minWidth": 1920,
-  "minHeight": 1080,
-  "orientation": "LANDSCAPE",
-  "priceTier": "PREMIUM",
-  "sortBy": "createdAt",
-  "sortDirection": "DESC",
-  "hasWatermark": true,
-  "hasThumbnail": true,
-  "isoRange": "100-800",
-  "apertureRange": "f/2.8-f/5.6",
-  "lens": "RF 100-500mm",
-  "includePhotographer": true,
-  "includeTags": true,
-  "includeCategories": true
-}
-```
+**Request Body:** Full `PhotoSearchCriteria` with all available filters
 
-**Response:** Photos matching all specified comprehensive criteria
+---
 
-**Notes:**
-- Most flexible search endpoint
-- All fields are optional
-- Supports multiple sorting and filtering options
-- Can eagerly load related entities
-
-### 22. Quick Search
-**Endpoint:** `POST /api/v1/photos/search/quick?page=0&size=20`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
+#### 22. Quick Search
+```http
+POST /api/v1/photos/search/quick?page=0&size=20
 Content-Type: application/json
+Authorization: Bearer {token}
 ```
 
 **Request Body:**
@@ -1256,2309 +1429,186 @@ Content-Type: application/json
 }
 ```
 
-**Response:** Approved and active photos matching quick search criteria
-
-**Notes:**
-- Simplified search for public-facing searches
-- Automatically filters for approved and active photos
-- All fields are optional
-- Returns empty results if no criteria match
+**Note:** Simplified search for public-facing applications
 
 ---
 
-## 📂 Category Management Endpoints
+## 🧪 Testing Guide
 
-### 1. Create Category
-**Endpoint:** `POST /api/v1/categories`
+### Prerequisites
 
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-**Notes:**
-- If `slug` is not provided, it will be automatically generated from the name
-- If `isActive` is not provided, it defaults to `true`
-- Category name and slug must be unique
-
-### 2. Update Category
-**Endpoint:** `PUT /api/v1/categories/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "Wildlife Photography",
-  "description": "Wildlife photography from Sri Lankan jungles",
-  "slug": "wildlife-photography",
-  "imageUrl": "https://example.com/categories/wildlife-updated.jpg",
-  "isActive": true,
-  "displayOrder": 1
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife Photography",
-  "description": "Wildlife photography from Sri Lankan jungles",
-  "slug": "wildlife-photography",
-  "imageUrl": "https://example.com/categories/wildlife-updated.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T11:00:00"
-}
-```
-
-### 3. Update Category Info (Partial Update)
-**Endpoint:** `PATCH /api/v1/categories/{id}/info`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `name` (optional): New category name
-- `description` (optional): New category description
-
-**Example:**
-```
-PATCH /api/v1/categories/1/info?name=Wildlife&description=Updated description
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Updated description",
-  "slug": "wildlife-photography",
-  "imageUrl": "https://example.com/categories/wildlife-updated.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T11:30:00"
-}
-```
-
-### 4. Update Category Image
-**Endpoint:** `PATCH /api/v1/categories/{id}/image`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `imageUrl` (required): New image URL
-
-**Example:**
-```
-PATCH /api/v1/categories/1/image?imageUrl=https://example.com/new-image.jpg
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Updated description",
-  "slug": "wildlife-photography",
-  "imageUrl": "https://example.com/new-image.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T11:45:00"
-}
-```
-
-### 5. Update Category Display Order
-**Endpoint:** `PATCH /api/v1/categories/{id}/order`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `displayOrder` (required): New display order (minimum: 0)
-
-**Example:**
-```
-PATCH /api/v1/categories/1/order?displayOrder=5
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Updated description",
-  "slug": "wildlife-photography",
-  "imageUrl": "https://example.com/new-image.jpg",
-  "isActive": true,
-  "displayOrder": 5,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T12:00:00"
-}
-```
-
-### 6. Get Category by ID
-**Endpoint:** `GET /api/v1/categories/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-**Error Response (404):**
-```json
-{
-  "timestamp": "2024-01-01T10:00:00",
-  "status": 404,
-  "error": "Not Found"
-}
-```
-
-### 7. Get Category by Slug
-**Endpoint:** `GET /api/v1/categories/slug/{slug}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-GET /api/v1/categories/slug/wildlife
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-### 8. Get Category by Name
-**Endpoint:** `GET /api/v1/categories/name/{name}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-GET /api/v1/categories/name/Wildlife
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-### 9. Get All Categories (Paginated)
-**Endpoint:** `GET /api/v1/categories?page=0&size=10&sort=displayOrder,asc`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "Wildlife",
-      "description": "Wildlife photography from Sri Lanka",
-      "slug": "wildlife",
-      "imageUrl": "https://example.com/categories/wildlife.jpg",
-      "isActive": true,
-      "displayOrder": 1,
-      "createdAt": "2024-01-01T10:00:00",
-      "updatedAt": "2024-01-01T10:00:00"
-    },
-    {
-      "id": 2,
-      "name": "Landscapes",
-      "description": "Beautiful Sri Lankan landscapes",
-      "slug": "landscapes",
-      "imageUrl": "https://example.com/categories/landscapes.jpg",
-      "isActive": true,
-      "displayOrder": 2,
-      "createdAt": "2024-01-01T10:05:00",
-      "updatedAt": "2024-01-01T10:05:00"
-    }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 10,
-    "sort": {
-      "sorted": true,
-      "unsorted": false,
-      "empty": false
-    }
-  },
-  "totalElements": 2,
-  "totalPages": 1,
-  "last": true,
-  "first": true,
-  "numberOfElements": 2,
-  "size": 10,
-  "number": 0,
-  "empty": false
-}
-```
-
-### 10. Get Active Categories (Paginated)
-**Endpoint:** `GET /api/v1/categories/active?page=0&size=10`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "Wildlife",
-      "description": "Wildlife photography from Sri Lanka",
-      "slug": "wildlife",
-      "imageUrl": "https://example.com/categories/wildlife.jpg",
-      "isActive": true,
-      "displayOrder": 1,
-      "createdAt": "2024-01-01T10:00:00",
-      "updatedAt": "2024-01-01T10:00:00"
-    }
-  ],
-  "totalElements": 1,
-  "totalPages": 1
-}
-```
-
-### 11. Get Active Categories (List)
-**Endpoint:** `GET /api/v1/categories/active/list`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Wildlife",
-    "description": "Wildlife photography from Sri Lanka",
-    "slug": "wildlife",
-    "imageUrl": "https://example.com/categories/wildlife.jpg",
-    "isActive": true,
-    "displayOrder": 1,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 2,
-    "name": "Landscapes",
-    "description": "Beautiful Sri Lankan landscapes",
-    "slug": "landscapes",
-    "imageUrl": "https://example.com/categories/landscapes.jpg",
-    "isActive": true,
-    "displayOrder": 2,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  }
-]
-```
-
-### 12. Get Ordered Categories
-**Endpoint:** `GET /api/v1/categories/ordered`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Wildlife",
-    "slug": "wildlife",
-    "displayOrder": 1,
-    "isActive": true
-  },
-  {
-    "id": 2,
-    "name": "Landscapes",
-    "slug": "landscapes",
-    "displayOrder": 2,
-    "isActive": true
-  }
-]
-```
-
-### 13. Get Active Ordered Categories
-**Endpoint:** `GET /api/v1/categories/active/ordered`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Wildlife",
-    "slug": "wildlife",
-    "displayOrder": 1,
-    "isActive": true
-  },
-  {
-    "id": 3,
-    "name": "Birds",
-    "slug": "birds",
-    "displayOrder": 3,
-    "isActive": true
-  }
-]
-```
-
-### 14. Search Categories
-**Endpoint:** `GET /api/v1/categories/search?q=wild&page=0&size=10`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `q` (required): Search term
-- `page` (optional): Page number (default: 0)
-- `size` (optional): Page size (default: 10)
-
-**Response:**
-```json
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "Wildlife",
-      "description": "Wildlife photography from Sri Lanka",
-      "slug": "wildlife",
-      "imageUrl": "https://example.com/categories/wildlife.jpg",
-      "isActive": true,
-      "displayOrder": 1,
-      "createdAt": "2024-01-01T10:00:00",
-      "updatedAt": "2024-01-01T10:00:00"
-    }
-  ],
-  "totalElements": 1,
-  "totalPages": 1
-}
-```
-
-### 15. Get Empty Categories
-**Endpoint:** `GET /api/v1/categories/empty`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 5,
-    "name": "New Category",
-    "description": "Category with no photos",
-    "slug": "new-category",
-    "imageUrl": null,
-    "isActive": true,
-    "displayOrder": 10,
-    "createdAt": "2024-01-01T12:00:00",
-    "updatedAt": "2024-01-01T12:00:00"
-  }
-]
-```
-
-### 16. Get Categories with Photo Count
-**Endpoint:** `GET /api/v1/categories/with-photo-count?page=0&size=10`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "content": [
-    [
-      {
-        "id": 1,
-        "name": "Wildlife",
-        "slug": "wildlife"
-      },
-      25
-    ],
-    [
-      {
-        "id": 2,
-        "name": "Landscapes",
-        "slug": "landscapes"
-      },
-      18
-    ]
-  ],
-  "totalElements": 2,
-  "totalPages": 1
-}
-```
-
-**Note:** Each element is an array where:
-- Index 0: Category object
-- Index 1: Photo count (Long)
-
-### 17. Count Active Categories
-**Endpoint:** `GET /api/v1/categories/counts/active`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-5
-```
-
-### 18. Count Total Categories
-**Endpoint:** `GET /api/v1/categories/counts/total`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-7
-```
-
-### 19. Reorder Categories
-**Endpoint:** `POST /api/v1/categories/reorder`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-[
-  {
-    "id": 1,
-    "displayOrder": 3
-  },
-  {
-    "id": 2,
-    "displayOrder": 1
-  },
-  {
-    "id": 3,
-    "displayOrder": 2
-  }
-]
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 2,
-    "name": "Landscapes",
-    "slug": "landscapes",
-    "displayOrder": 1,
-    "isActive": true
-  },
-  {
-    "id": 3,
-    "name": "Birds",
-    "slug": "birds",
-    "displayOrder": 2,
-    "isActive": true
-  },
-  {
-    "id": 1,
-    "name": "Wildlife",
-    "slug": "wildlife",
-    "displayOrder": 3,
-    "isActive": true
-  }
-]
-```
-
-### 20. Activate Category
-**Endpoint:** `POST /api/v1/categories/{id}/activate`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": true,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T13:00:00"
-}
-```
-
-### 21. Deactivate Category
-**Endpoint:** `POST /api/v1/categories/{id}/deactivate`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Wildlife",
-  "description": "Wildlife photography from Sri Lanka",
-  "slug": "wildlife",
-  "imageUrl": "https://example.com/categories/wildlife.jpg",
-  "isActive": false,
-  "displayOrder": 1,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T13:15:00"
-}
-```
-
-### 22. Delete Category
-**Endpoint:** `DELETE /api/v1/categories/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:** `204 No Content`
-
-**Notes:**
-- Cannot delete a category that has associated photos
-- Returns `400 Bad Request` if category has photos
-
----
-
-## 🏷️ Tag Management Endpoints
-
-### 1. Create Tag
-**Endpoint:** `POST /api/v1/tags`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "leopard",
-  "description": "Photos featuring leopards"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 0,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-**Notes:**
-- Tag names are automatically normalized to lowercase
-- Tag names must be unique
-- Description is optional
-
-### 2. Create Tag by Name (Simple)
-**Endpoint:** `POST /api/v1/tags/simple?name={tagName}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-POST /api/v1/tags/simple?name=elephant
-```
-
-**Response:**
-```json
-{
-  "id": 2,
-  "name": "elephant",
-  "description": null,
-  "usageCount": 0,
-  "createdAt": "2024-01-01T10:05:00",
-  "updatedAt": "2024-01-01T10:05:00"
-}
-```
-
-### 3. Update Tag
-**Endpoint:** `PUT /api/v1/tags/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "name": "sri-lankan-leopard",
-  "description": "Photos of Sri Lankan leopards (Panthera pardus kotiya)"
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "sri-lankan-leopard",
-  "description": "Photos of Sri Lankan leopards (Panthera pardus kotiya)",
-  "usageCount": 0,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:30:00"
-}
-```
-
-**Notes:**
-- Both name and description are optional in update
-- Only provided fields will be updated
-
-### 4. Update Tag Description
-**Endpoint:** `PATCH /api/v1/tags/{id}/description?description={description}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-PATCH /api/v1/tags/1/description?description=Updated%20description
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "sri-lankan-leopard",
-  "description": "Updated description",
-  "usageCount": 0,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:45:00"
-}
-```
-
-### 5. Rename Tag
-**Endpoint:** `PATCH /api/v1/tags/{id}/rename?newName={newName}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-PATCH /api/v1/tags/1/rename?newName=leopard-kotiya
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard-kotiya",
-  "description": "Updated description",
-  "usageCount": 0,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T11:00:00"
-}
-```
-
-### 6. Get Tag by ID
-**Endpoint:** `GET /api/v1/tags/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 15,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-**Error Response (404):**
-```json
-{
-  "timestamp": "2024-01-01T10:00:00",
-  "status": 404,
-  "error": "Not Found"
-}
-```
-
-### 7. Get Tag by Name
-**Endpoint:** `GET /api/v1/tags/name/{name}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-GET /api/v1/tags/name/leopard
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 15,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:00:00"
-}
-```
-
-### 8. Get All Tags (Paginated)
-**Endpoint:** `GET /api/v1/tags?page=0&size=10&sort=name,asc`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "elephant",
-      "description": null,
-      "usageCount": 25,
-      "createdAt": "2024-01-01T10:00:00",
-      "updatedAt": "2024-01-01T10:00:00"
-    },
-    {
-      "id": 2,
-      "name": "leopard",
-      "description": "Photos featuring leopards",
-      "usageCount": 15,
-      "createdAt": "2024-01-01T10:05:00",
-      "updatedAt": "2024-01-01T10:05:00"
-    }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 10,
-    "sort": {
-      "sorted": true,
-      "unsorted": false,
-      "empty": false
-    }
-  },
-  "totalElements": 2,
-  "totalPages": 1,
-  "last": true,
-  "first": true,
-  "numberOfElements": 2,
-  "size": 10,
-  "number": 0,
-  "empty": false
-}
-```
-
-### 9. Get Top Tags
-**Endpoint:** `GET /api/v1/tags/top?limit={limit}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `limit` (optional): Number of top tags to return (default: 10, minimum: 1)
-
-**Example:**
-```
-GET /api/v1/tags/top?limit=5
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "wildlife",
-    "description": null,
-    "usageCount": 150,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 2,
-    "name": "elephant",
-    "description": null,
-    "usageCount": 75,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  },
-  {
-    "id": 3,
-    "name": "leopard",
-    "description": "Photos featuring leopards",
-    "usageCount": 50,
-    "createdAt": "2024-01-01T10:10:00",
-    "updatedAt": "2024-01-01T10:10:00"
-  }
-]
-```
-
-**Notes:**
-- Returns tags ordered by usage count (descending)
-- Useful for displaying popular tags
-
-### 10. Get Popular Tags
-**Endpoint:** `GET /api/v1/tags/popular?minUsageCount={count}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `minUsageCount` (optional): Minimum usage count threshold (default: 1, minimum: 0)
-
-**Example:**
-```
-GET /api/v1/tags/popular?minUsageCount=10
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "wildlife",
-    "description": null,
-    "usageCount": 150,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 2,
-    "name": "elephant",
-    "description": null,
-    "usageCount": 75,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  }
-]
-```
-
-**Notes:**
-- Returns all tags with usage count >= minUsageCount
-- Ordered by usage count descending
-
-### 11. Get Unused Tags
-**Endpoint:** `GET /api/v1/tags/unused`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 10,
-    "name": "new-tag",
-    "description": null,
-    "usageCount": 0,
-    "createdAt": "2024-01-01T15:00:00",
-    "updatedAt": "2024-01-01T15:00:00"
-  },
-  {
-    "id": 11,
-    "name": "unused-tag",
-    "description": "Never been used",
-    "usageCount": 0,
-    "createdAt": "2024-01-01T15:05:00",
-    "updatedAt": "2024-01-01T15:05:00"
-  }
-]
-```
-
-**Notes:**
-- Returns tags with usageCount = 0
-- Useful for cleanup operations
-
-### 12. Search Tags
-**Endpoint:** `GET /api/v1/tags/search?q={searchTerm}&page=0&size=10`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters:**
-- `q` (required): Search term
-- `page` (optional): Page number (default: 0)
-- `size` (optional): Page size (default: 10)
-
-**Example:**
-```
-GET /api/v1/tags/search?q=leo&page=0&size=10
-```
-
-**Response:**
-```json
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "leopard",
-      "description": "Photos featuring leopards",
-      "usageCount": 50,
-      "createdAt": "2024-01-01T10:00:00",
-      "updatedAt": "2024-01-01T10:00:00"
-    },
-    {
-      "id": 5,
-      "name": "sri-lankan-leopard",
-      "description": "Endemic leopard subspecies",
-      "usageCount": 30,
-      "createdAt": "2024-01-01T11:00:00",
-      "updatedAt": "2024-01-01T11:00:00"
-    }
-  ],
-  "totalElements": 2,
-  "totalPages": 1
-}
-```
-
-**Notes:**
-- Searches in both tag name and description
-- Case-insensitive search
-
-### 13. Get Tags by IDs
-**Endpoint:** `POST /api/v1/tags/by-ids`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-[1, 2, 5, 10]
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "leopard",
-    "description": "Photos featuring leopards",
-    "usageCount": 50,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 2,
-    "name": "elephant",
-    "description": null,
-    "usageCount": 75,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  }
-]
-```
-
-**Notes:**
-- Returns only tags that exist
-- Non-existent IDs are silently ignored
-
-### 14. Get Tags by Names
-**Endpoint:** `POST /api/v1/tags/by-names`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-["leopard", "elephant", "whale", "nonexistent"]
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "leopard",
-    "description": "Photos featuring leopards",
-    "usageCount": 50,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 2,
-    "name": "elephant",
-    "description": null,
-    "usageCount": 75,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  },
-  {
-    "id": 8,
-    "name": "whale",
-    "description": "Marine mammals",
-    "usageCount": 20,
-    "createdAt": "2024-01-01T12:00:00",
-    "updatedAt": "2024-01-01T12:00:00"
-  }
-]
-```
-
-**Notes:**
-- Tag names are case-insensitive
-- Non-existent tags are ignored
-
-### 15. Get or Create Tags by Names
-**Endpoint:** `POST /api/v1/tags/get-or-create`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-["leopard", "new-species", "elephant"]
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "leopard",
-    "description": "Photos featuring leopards",
-    "usageCount": 50,
-    "createdAt": "2024-01-01T10:00:00",
-    "updatedAt": "2024-01-01T10:00:00"
-  },
-  {
-    "id": 15,
-    "name": "new-species",
-    "description": null,
-    "usageCount": 0,
-    "createdAt": "2024-01-01T16:00:00",
-    "updatedAt": "2024-01-01T16:00:00"
-  },
-  {
-    "id": 2,
-    "name": "elephant",
-    "description": null,
-    "usageCount": 75,
-    "createdAt": "2024-01-01T10:05:00",
-    "updatedAt": "2024-01-01T10:05:00"
-  }
-]
-```
-
-**Notes:**
-- Creates tags if they don't exist
-- Returns existing tags if they already exist
-- Very useful for bulk tag operations
-
-### 16. Count Total Tags
-**Endpoint:** `GET /api/v1/tags/count`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-42
-```
-
-### 17. Increment Usage Count
-**Endpoint:** `POST /api/v1/tags/{id}/increment-usage`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 51,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T16:30:00"
-}
-```
-
-**Notes:**
-- Increases usage count by 1
-- Call when a tag is assigned to a photo
-
-### 18. Decrement Usage Count
-**Endpoint:** `POST /api/v1/tags/{id}/decrement-usage`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 50,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T16:35:00"
-}
-```
-
-**Notes:**
-- Decreases usage count by 1
-- Cannot go below 0
-- Call when a tag is removed from a photo
-
-### 19. Recalculate Usage Counts
-**Endpoint:** `POST /api/v1/tags/recalculate-usage`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-25
-```
-
-**Notes:**
-- Returns the number of tags updated
-- Recalculates usage count based on actual photo_tags associations
-- Use when usage counts become inconsistent
-
-### 20. Merge Tags
-**Endpoint:** `POST /api/v1/tags/merge`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "sourceTagIds": [5, 10, 15],
-  "targetTagId": 1
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "leopard",
-  "description": "Photos featuring leopards",
-  "usageCount": 125,
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T17:00:00"
-}
-```
-
-**Notes:**
-- Merges multiple tags into one target tag
-- All photo associations are moved to target tag
-- Source tags are deleted after merge
-- Usage count is recalculated
-- Useful for consolidating duplicate or similar tags
-
-### 21. Delete Tag
-**Endpoint:** `DELETE /api/v1/tags/{id}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:** `204 No Content`
-
-**Notes:**
-- Deletes the tag and all its photo associations
-- Cannot be undone
-
-### 22. Delete Unused Tags
-**Endpoint:** `DELETE /api/v1/tags/unused`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Response:**
-```json
-5
-```
-
-**Notes:**
-- Returns the number of deleted tags
-- Only deletes tags with usageCount = 0
-- Useful for cleanup operations
-
-### 23. Check Tag Exists
-**Endpoint:** `GET /api/v1/tags/exists?name={tagName}`
-
-**Headers:**
-```
-Authorization: Bearer {access_token}
-```
-
-**Example:**
-```
-GET /api/v1/tags/exists?name=leopard
-```
-
-**Response:**
-```json
-true
-```
-
-**Notes:**
-- Returns `true` if tag exists, `false` otherwise
-- Tag name is case-insensitive
-
----
-
-## 📮 Testing with Postman
-
-### Step 1: Setup Environment
-1. Create a new environment in Postman
-2. Add variables:
-   - `base_url`: `http://localhost:8080`
-   - `jwt_token`: (will be set after login)
-
-### Step 2: Login and Get Token
-1. **Login Request:**
-   - Method: POST
-   - URL: `{{base_url}}/api/auth/login`
-   - Body:
-   ```json
-   {
-     "usernameOrEmail": "admin",
-     "password": "password123"
-   }
-   ```
-   - Tests script:
-   ```javascript
-   if (pm.response.code === 200) {
-       const response = pm.response.json();
-       pm.environment.set("jwt_token", response.accessToken);
-   }
-   ```
-
-### Step 3: Test Category Endpoints
-All category endpoints require authentication. Add to Headers:
-- Key: `Authorization`
-- Value: `Bearer {{jwt_token}}`
-
-### Step 4: Example Test Collection
-
-#### Create Category Test
-```javascript
-pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
-});
-
-pm.test("Category created with correct name", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData.name).to.eql("Wildlife");
-});
-
-pm.test("Slug is auto-generated", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData.slug).to.exist;
-});
-
-// Save category ID for future tests
-if (pm.response.code === 200) {
-    const response = pm.response.json();
-    pm.environment.set("category_id", response.id);
-}
-```
-
-#### Get Category Test
-```javascript
-pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
-});
-
-pm.test("Category has all required fields", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
-    pm.expect(jsonData).to.have.property('name');
-    pm.expect(jsonData).to.have.property('slug');
-    pm.expect(jsonData).to.have.property('isActive');
-});
-```
-
-## 📋 Testing with curl
+- Java 25+
+- Maven 3.6+
+- MySQL 8.0+
+- Postman or curl
 
 ### Setup
+
+1. **Configure Database:**
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:mysql://localhost:3306/ceylonwildcapture
+       username: your_username
+       password: your_password
+   ```
+
+2. **Set Environment Variables:**
+   ```bash
+   export JWT_SECRET="your-secret-key-here"
+   ```
+
+3. **Run Application:**
+   ```bash
+   mvn clean install
+   mvn spring-boot:run
+   ```
+
+### Authentication
+
+All endpoints require JWT authentication. First, obtain a token:
+
 ```bash
-# Login and save token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "usernameOrEmail": "admin",
     "password": "password123"
-  }' | jq -r '.accessToken')
-
-echo "Token: $TOKEN"
+  }'
 ```
 
-### Category Operations
+Save the `accessToken` from the response for subsequent requests.
 
-#### Create Category
+### Example Test Scenarios
+
+#### Scenario 1: Complete Photo Lifecycle
+
 ```bash
-curl -X POST http://localhost:8080/api/v1/categories \
+# 1. Upload photo
+curl -X POST http://localhost:8080/api/v1/photos/upload \
   -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Wildlife",
-    "description": "Wildlife photography from Sri Lanka",
-    "imageUrl": "https://example.com/wildlife.jpg",
-    "isActive": true,
-    "displayOrder": 1
-  }' | jq
-```
+  -F "file=@leopard.jpg" \
+  -F 'data={"title":"Leopard","photographerId":1,"basePrice":50.00}'
 
-#### Update Category
-```bash
-curl -X PUT http://localhost:8080/api/v1/categories/1 \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Wildlife Photography",
-    "description": "Updated description",
-    "slug": "wildlife-photography",
-    "isActive": true,
-    "displayOrder": 1
-  }' | jq
-```
-
-#### Update Category Info
-```bash
-curl -X PATCH "http://localhost:8080/api/v1/categories/1/info?name=Wildlife&description=New%20description" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Update Category Image
-```bash
-curl -X PATCH "http://localhost:8080/api/v1/categories/1/image?imageUrl=https://example.com/new-image.jpg" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Update Display Order
-```bash
-curl -X PATCH "http://localhost:8080/api/v1/categories/1/order?displayOrder=5" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Category by ID
-```bash
-curl -X GET http://localhost:8080/api/v1/categories/1 \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Category by Slug
-```bash
-curl -X GET http://localhost:8080/api/v1/categories/slug/wildlife \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get All Categories (Paginated)
-```bash
-curl -X GET "http://localhost:8080/api/v1/categories?page=0&size=10&sort=displayOrder,asc" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Active Categories
-```bash
-curl -X GET "http://localhost:8080/api/v1/categories/active?page=0&size=10" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Active Categories List
-```bash
-curl -X GET http://localhost:8080/api/v1/categories/active/list \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Search Categories
-```bash
-curl -X GET "http://localhost:8080/api/v1/categories/search?q=wild&page=0&size=10" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Empty Categories
-```bash
-curl -X GET http://localhost:8080/api/v1/categories/empty \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Count Categories
-```bash
-# Count active categories
-curl -X GET http://localhost:8080/api/v1/categories/counts/active \
+# 2. Approve photo (admin)
+curl -X PATCH http://localhost:8080/api/v1/photos/1/approve \
   -H "Authorization: Bearer $TOKEN"
 
-# Count total categories
-curl -X GET http://localhost:8080/api/v1/categories/counts/total \
+# 3. Set as featured
+curl -X PATCH "http://localhost:8080/api/v1/photos/1/featured?featured=true" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Track engagement
+curl -X POST http://localhost:8080/api/v1/photos/1/increment-views \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-#### Reorder Categories
-```bash
-curl -X POST http://localhost:8080/api/v1/categories/reorder \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '[
-    {"id": 1, "displayOrder": 3},
-    {"id": 2, "displayOrder": 1},
-    {"id": 3, "displayOrder": 2}
-  ]' | jq
-```
+#### Scenario 2: Category Management
 
-#### Activate/Deactivate Category
-```bash
-# Activate
-curl -X POST http://localhost:8080/api/v1/categories/1/activate \
-  -H "Authorization: Bearer $TOKEN" | jq
-
-# Deactivate
-curl -X POST http://localhost:8080/api/v1/categories/1/deactivate \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Delete Category
-```bash
-curl -X DELETE http://localhost:8080/api/v1/categories/1 \
-  -H "Authorization: Bearer $TOKEN" -v
-```
-
----
-
-### Tag Operations
-
-#### Create Tag
-```bash
-curl -X POST http://localhost:8080/api/v1/tags \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "leopard",
-    "description": "Photos featuring leopards"
-  }' | jq
-```
-
-#### Create Tag (Simple)
-```bash
-curl -X POST "http://localhost:8080/api/v1/tags/simple?name=elephant" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Update Tag
-```bash
-curl -X PUT http://localhost:8080/api/v1/tags/1 \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "sri-lankan-leopard",
-    "description": "Endemic leopard subspecies"
-  }' | jq
-```
-
-#### Update Tag Description
-```bash
-curl -X PATCH "http://localhost:8080/api/v1/tags/1/description?description=Updated%20description" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Rename Tag
-```bash
-curl -X PATCH "http://localhost:8080/api/v1/tags/1/rename?newName=leopard-kotiya" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Tag by ID
-```bash
-curl -X GET http://localhost:8080/api/v1/tags/1 \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Tag by Name
-```bash
-curl -X GET http://localhost:8080/api/v1/tags/name/leopard \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get All Tags (Paginated)
-```bash
-curl -X GET "http://localhost:8080/api/v1/tags?page=0&size=10&sort=name,asc" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Top Tags
-```bash
-curl -X GET "http://localhost:8080/api/v1/tags/top?limit=5" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Popular Tags
-```bash
-curl -X GET "http://localhost:8080/api/v1/tags/popular?minUsageCount=10" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Unused Tags
-```bash
-curl -X GET http://localhost:8080/api/v1/tags/unused \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Search Tags
-```bash
-curl -X GET "http://localhost:8080/api/v1/tags/search?q=leo&page=0&size=10" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Get Tags by IDs
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/by-ids \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '[1, 2, 5, 10]' | jq
-```
-
-#### Get Tags by Names
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/by-names \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '["leopard", "elephant", "whale"]' | jq
-```
-
-#### Get or Create Tags by Names
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/get-or-create \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '["leopard", "new-species", "elephant"]' | jq
-```
-
-#### Count Total Tags
-```bash
-curl -X GET http://localhost:8080/api/v1/tags/count \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-#### Increment Usage Count
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/1/increment-usage \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Decrement Usage Count
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/1/decrement-usage \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-#### Recalculate Usage Counts
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/recalculate-usage \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-#### Merge Tags
-```bash
-curl -X POST http://localhost:8080/api/v1/tags/merge \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sourceTagIds": [5, 10, 15],
-    "targetTagId": 1
-  }' | jq
-```
-
-#### Delete Tag
-```bash
-curl -X DELETE http://localhost:8080/api/v1/tags/1 \
-  -H "Authorization: Bearer $TOKEN" -v
-```
-
-#### Delete Unused Tags
-```bash
-curl -X DELETE http://localhost:8080/api/v1/tags/unused \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-#### Check Tag Exists
-```bash
-curl -X GET "http://localhost:8080/api/v1/tags/exists?name=leopard" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
----
-
-## 🧪 Common Test Scenarios
-
-### Scenario 1: Complete Category Lifecycle
 ```bash
 # 1. Create category
 CATEGORY_ID=$(curl -s -X POST http://localhost:8080/api/v1/categories \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test Category",
-    "description": "Test description"
-  }' | jq -r '.id')
+  -d '{"name":"Wildlife","description":"Wildlife photos"}' \
+  | jq -r '.id')
 
-echo "Created category ID: $CATEGORY_ID"
-
-# 2. Update category
-curl -X PUT http://localhost:8080/api/v1/categories/$CATEGORY_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Updated Test Category",
-    "description": "Updated description",
-    "isActive": true
-  }'
-
-# 3. Get category
-curl -X GET http://localhost:8080/api/v1/categories/$CATEGORY_ID \
+# 2. Update display order
+curl -X PATCH "http://localhost:8080/api/v1/categories/$CATEGORY_ID/order?displayOrder=1" \
   -H "Authorization: Bearer $TOKEN"
 
-# 4. Deactivate category
-curl -X POST http://localhost:8080/api/v1/categories/$CATEGORY_ID/deactivate \
-  -H "Authorization: Bearer $TOKEN"
-
-# 5. Delete category
-curl -X DELETE http://localhost:8080/api/v1/categories/$CATEGORY_ID \
+# 3. Get active categories
+curl -X GET http://localhost:8080/api/v1/categories/active/ordered \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### Scenario 2: Duplicate Name/Slug Validation
+#### Scenario 3: Tag Operations
+
 ```bash
-# Create first category
-curl -X POST http://localhost:8080/api/v1/categories \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Wildlife",
-    "slug": "wildlife"
-  }'
-
-# Try to create duplicate (should fail with 400)
-curl -X POST http://localhost:8080/api/v1/categories \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Wildlife",
-    "slug": "wildlife"
-  }'
-```
-
-### Scenario 3: Slug Auto-Generation
-```bash
-# Create category without slug
-curl -X POST http://localhost:8080/api/v1/categories \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Sri Lankan Wildlife"
-  }' | jq
-
-# Expected slug: "sri-lankan-wildlife"
-```
-
-### Scenario 4: Category Ordering
-```bash
-# Create multiple categories
-for i in {1..5}; do
-  curl -s -X POST http://localhost:8080/api/v1/categories \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{
-      \"name\": \"Category $i\",
-      \"displayOrder\": $i
-    }"
-done
-
-# Get ordered categories
-curl -X GET http://localhost:8080/api/v1/categories/ordered \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-### Scenario 5: Search Functionality
-```bash
-# Create test categories
-curl -X POST http://localhost:8080/api/v1/categories \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Wildlife Photography"}'
-
-curl -X POST http://localhost:8080/api/v1/categories \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Landscape Photography"}'
-
-# Search for "photo"
-curl -X GET "http://localhost:8080/api/v1/categories/search?q=photo" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-### Scenario 6: Tag Lifecycle
-```bash
-# 1. Create multiple tags
-TAG1_ID=$(curl -s -X POST http://localhost:8080/api/v1/tags \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "leopard",
-    "description": "Photos featuring leopards"
-  }' | jq -r '.id')
-
-TAG2_ID=$(curl -s -X POST "http://localhost:8080/api/v1/tags/simple?name=elephant" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
-
-echo "Created tag IDs: $TAG1_ID, $TAG2_ID"
-
-# 2. Update tag
-curl -X PUT http://localhost:8080/api/v1/tags/$TAG1_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "sri-lankan-leopard",
-    "description": "Endemic leopard subspecies"
-  }'
-
-# 3. Increment usage count (simulating photo tagging)
-curl -X POST http://localhost:8080/api/v1/tags/$TAG1_ID/increment-usage \
-  -H "Authorization: Bearer $TOKEN"
-
-# 4. Get tag details
-curl -X GET http://localhost:8080/api/v1/tags/$TAG1_ID \
-  -H "Authorization: Bearer $TOKEN"
-
-# 5. Search tags
-curl -X GET "http://localhost:8080/api/v1/tags/search?q=leopard" \
-  -H "Authorization: Bearer $TOKEN"
-
-# 6. Delete tag
-curl -X DELETE http://localhost:8080/api/v1/tags/$TAG2_ID \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-### Scenario 7: Tag Name Normalization
-```bash
-# Create tag with mixed case
-curl -X POST http://localhost:8080/api/v1/tags \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Sri-Lankan-Leopard"
-  }' | jq
-
-# Name is automatically normalized to lowercase: "sri-lankan-leopard"
-```
-
-### Scenario 8: Get or Create Tags (Bulk Operations)
-```bash
-# Request multiple tags, some exist, some don't
+# 1. Create or get tags
 curl -X POST http://localhost:8080/api/v1/tags/get-or-create \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '["leopard", "elephant", "whale", "new-species"]' | jq
+  -d '["leopard","wildlife","yala"]'
 
-# Returns existing tags + creates new ones automatically
-```
-
-### Scenario 9: Tag Merge Operation
-```bash
-# Create duplicate/similar tags
-TAG1=$(curl -s -X POST "http://localhost:8080/api/v1/tags/simple?name=leopard" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
-
-TAG2=$(curl -s -X POST "http://localhost:8080/api/v1/tags/simple?name=leopards" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
-
-TAG3=$(curl -s -X POST "http://localhost:8080/api/v1/tags/simple?name=panthera-pardus" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
-
-# Merge all into TAG1
-curl -X POST http://localhost:8080/api/v1/tags/merge \
+# 2. Assign tags to photo
+curl -X PUT http://localhost:8080/api/v1/photos/1/tags \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{
-    \"sourceTagIds\": [$TAG2, $TAG3],
-    \"targetTagId\": $TAG1
-  }" | jq
+  -d '[1,2,3]'
 
-# TAG2 and TAG3 are deleted, all associations moved to TAG1
-```
-
-### Scenario 10: Tag Cleanup Operations
-```bash
-# Get unused tags
-curl -X GET http://localhost:8080/api/v1/tags/unused \
-  -H "Authorization: Bearer $TOKEN" | jq
-
-# Delete all unused tags
-DELETED_COUNT=$(curl -s -X DELETE http://localhost:8080/api/v1/tags/unused \
-  -H "Authorization: Bearer $TOKEN")
-
-echo "Deleted $DELETED_COUNT unused tags"
-```
-
-### Scenario 11: Popular Tags
-```bash
-# Get top 10 most used tags
-curl -X GET "http://localhost:8080/api/v1/tags/top?limit=10" \
-  -H "Authorization: Bearer $TOKEN" | jq
-
-# Get tags with at least 20 usages
-curl -X GET "http://localhost:8080/api/v1/tags/popular?minUsageCount=20" \
-  -H "Authorization: Bearer $TOKEN" | jq
-```
-
-### Scenario 12: Tag Usage Count Management
-```bash
-# Simulate photo tagging operations
-TAG_ID=1
-
-# When tag is added to a photo
-curl -X POST http://localhost:8080/api/v1/tags/$TAG_ID/increment-usage \
-  -H "Authorization: Bearer $TOKEN"
-
-# When tag is removed from a photo
-curl -X POST http://localhost:8080/api/v1/tags/$TAG_ID/decrement-usage \
-  -H "Authorization: Bearer $TOKEN"
-
-# If counts become inconsistent, recalculate all
-curl -X POST http://localhost:8080/api/v1/tags/recalculate-usage \
+# 3. Get popular tags
+curl -X GET "http://localhost:8080/api/v1/tags/popular?minUsageCount=5" \
   -H "Authorization: Bearer $TOKEN"
 ```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-#### 1. Cannot Delete Category with Photos
-**Problem:** `400 Bad Request` - "Cannot delete category with associated photos"
-**Solution:**
-- Delete or reassign all photos in the category first
-- Or deactivate the category instead of deleting
-
-#### 2. Duplicate Slug/Name Error (Category)
-**Problem:** `400 Bad Request` - "Category name already exists"
-**Solution:**
-- Use a unique name
-- If updating, ensure the new name doesn't conflict with existing categories
-
-#### 3. Duplicate Tag Name
-**Problem:** `400 Bad Request` - "Tag name already exists"
-**Solution:**
-- Tag names are unique and case-insensitive
-- Use a different name or retrieve the existing tag
-- Consider using the merge endpoint to consolidate similar tags
-
-#### 4. Invalid Display Order
-**Problem:** `400 Bad Request` - Display order must be >= 0
-**Solution:**
-- Ensure displayOrder is a non-negative integer
-
-#### 5. Category/Tag Not Found
-**Problem:** `404 Not Found`
-**Solution:**
-- Verify the category/tag ID exists
-- Check if it was deleted
-- Ensure you're using the correct endpoint
-
-#### 6. Tag Merge Failure
-**Problem:** `400 Bad Request` - "Cannot merge tag into itself" or "Source tag not found"
-**Solution:**
-- Ensure target tag is not in the source list
-- Verify all source and target tag IDs exist
-- Check that source and target tags are different
-
-#### 7. Unauthorized Access
-**Problem:** `401 Unauthorized`
-**Solution:**
-- Check JWT token is valid and not expired
-- Ensure proper Bearer token format
-- Re-login if token expired
-
-#### 8. Usage Count Inconsistency
-**Problem:** Tag usage counts don't match actual photo associations
-**Solution:**
-- Use the recalculate usage endpoint: `POST /api/v1/tags/recalculate-usage`
-- This will sync all counts with actual database associations
-
-### Debug Tips
-
-1. **Enable Debug Logging:**
-   ```yaml
-   logging:
-     level:
-       lk.ceylonwildcapture_backend.modules.photo: DEBUG
-   ```
-
-2. **Check Category Exists:**
-   ```sql
-   SELECT * FROM categories WHERE id = 1;
-   ```
-
-3. **Check Tag Exists:**
-   ```sql
-   SELECT * FROM tags WHERE id = 1;
-   ```
-
-4. **Verify Slug Uniqueness:**
-   ```sql
-   SELECT slug, COUNT(*) FROM categories GROUP BY slug HAVING COUNT(*) > 1;
-   ```
-
-5. **Verify Tag Name Uniqueness:**
-   ```sql
-   SELECT name, COUNT(*) FROM tags GROUP BY name HAVING COUNT(*) > 1;
-   ```
-
-6. **Check Photo-Category Associations:**
-   ```sql
-   SELECT c.name, COUNT(p.id) as photo_count
-   FROM categories c
-   LEFT JOIN photos p ON c.id = p.category_id
-   GROUP BY c.id, c.name;
-   ```
-
-7. **Check Photo-Tag Associations:**
-   ```sql
-   SELECT t.name, t.usage_count, COUNT(pt.photo_id) as actual_count
-   FROM tags t
-   LEFT JOIN photo_tags pt ON t.id = pt.tag_id
-   GROUP BY t.id, t.name, t.usage_count;
-   ```
-
-8. **Find Inconsistent Tag Usage Counts:**
-   ```sql
-   SELECT t.id, t.name, t.usage_count, COUNT(pt.photo_id) as actual_count
-   FROM tags t
-   LEFT JOIN photo_tags pt ON t.id = pt.tag_id
-   GROUP BY t.id, t.name, t.usage_count
-   HAVING t.usage_count != COUNT(pt.photo_id);
-   ```
-
-## 📊 Test Data
-
-### Sample Categories (SQL)
-```sql
--- Wildlife Category
-INSERT INTO categories (name, description, slug, image_url, is_active, display_order, created_at, updated_at)
-VALUES ('Wildlife', 'Wildlife photography from Sri Lankan jungles', 'wildlife', 'https://example.com/wildlife.jpg', true, 1, NOW(), NOW());
-
--- Landscape Category
-INSERT INTO categories (name, description, slug, image_url, is_active, display_order, created_at, updated_at)
-VALUES ('Landscapes', 'Beautiful Sri Lankan landscapes', 'landscapes', 'https://example.com/landscapes.jpg', true, 2, NOW(), NOW());
-
--- Birds Category
-INSERT INTO categories (name, description, slug, image_url, is_active, display_order, created_at, updated_at)
-VALUES ('Birds', 'Endemic and migratory birds of Sri Lanka', 'birds', 'https://example.com/birds.jpg', true, 3, NOW(), NOW());
-
--- Marine Life Category
-INSERT INTO categories (name, description, slug, image_url, is_active, display_order, created_at, updated_at)
-VALUES ('Marine Life', 'Underwater photography from Sri Lankan coasts', 'marine-life', 'https://example.com/marine.jpg', true, 4, NOW(), NOW());
-
--- Cultural Category
-INSERT INTO categories (name, description, slug, image_url, is_active, display_order, created_at, updated_at)
-VALUES ('Cultural', 'Sri Lankan culture and heritage', 'cultural', 'https://example.com/cultural.jpg', true, 5, NOW(), NOW());
-```
-
-### Sample Tags (SQL)
-```sql
--- Wildlife Tags
-INSERT INTO tags (name, description, usage_count, created_at, updated_at)
-VALUES 
-  ('leopard', 'Sri Lankan leopard (Panthera pardus kotiya)', 0, NOW(), NOW()),
-  ('elephant', 'Asian elephant (Elephas maximus)', 0, NOW(), NOW()),
-  ('sloth-bear', 'Sloth bear (Melursus ursinus)', 0, NOW(), NOW()),
-  ('spotted-deer', 'Spotted deer (Axis axis)', 0, NOW(), NOW()),
-  ('sambhur', 'Sambhur deer (Rusa unicolor)', 0, NOW(), NOW());
-
--- Bird Tags
-INSERT INTO tags (name, description, usage_count, created_at, updated_at)
-VALUES 
-  ('peacock', 'Indian peafowl', 0, NOW(), NOW()),
-  ('hornbill', 'Sri Lanka grey hornbill', 0, NOW(), NOW()),
-  ('kingfisher', 'Various kingfisher species', 0, NOW(), NOW()),
-  ('eagle', 'Crested serpent eagle', 0, NOW(), NOW());
-
--- Marine Tags
-INSERT INTO tags (name, description, usage_count, created_at, updated_at)
-VALUES 
-  ('whale', 'Blue whales and other species', 0, NOW(), NOW()),
-  ('dolphin', 'Various dolphin species', 0, NOW(), NOW()),
-  ('sea-turtle', 'Sea turtles in Sri Lankan waters', 0, NOW(), NOW()),
-  ('coral-reef', 'Coral reef ecosystems', 0, NOW(), NOW());
-
--- Location Tags
-INSERT INTO tags (name, description, usage_count, created_at, updated_at)
-VALUES 
-  ('yala', 'Yala National Park', 0, NOW(), NOW()),
-  ('wilpattu', 'Wilpattu National Park', 0, NOW(), NOW()),
-  ('udawalawe', 'Udawalawe National Park', 0, NOW(), NOW()),
-  ('mirissa', 'Mirissa coastal area', 0, NOW(), NOW()),
-  ('sigiriya', 'Sigiriya rock fortress', 0, NOW(), NOW());
-```
-
-## 📝 API Documentation
-
-Once the application is running, you can access:
-- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
-- **OpenAPI Spec:** `http://localhost:8080/v3/api-docs`
-
-## 🚨 Validation Rules
-
-### Category Name
-- **Required:** Yes
-- **Minimum length:** 1 character
-- **Maximum length:** 255 characters
-- **Unique:** Yes
-- **Example:** "Wildlife", "Landscapes"
-
-### Category Slug
-- **Required:** No (auto-generated if not provided)
-- **Format:** lowercase, alphanumeric with hyphens
-- **Unique:** Yes
-- **Example:** "wildlife", "sri-lankan-landscapes"
-
-### Display Order
-- **Required:** No
-- **Type:** Integer
-- **Minimum:** 0
-- **Default:** null
-- **Example:** 1, 5, 10
-
-### Image URL
-- **Required:** No
-- **Format:** Valid URL string
-- **Example:** "https://example.com/image.jpg"
-
-### Tag Name
-- **Required:** Yes
-- **Minimum length:** 2 characters
-- **Maximum length:** 50 characters
-- **Unique:** Yes (case-insensitive)
-- **Format:** Automatically normalized to lowercase
-- **Example:** "leopard", "sri-lankan-elephant"
-
-### Tag Description
-- **Required:** No
-- **Maximum length:** 255 characters
-- **Example:** "Photos featuring Sri Lankan leopards"
-
-### Tag Usage Count
-- **Type:** Integer
-- **Minimum:** 0
-- **Managed by:** System (auto-incremented/decremented)
-- **Can be recalculated:** Yes
-
-### Tag Merge Operation
-- **sourceTagIds:** Required, must be a non-empty list of valid tag IDs
-- **targetTagId:** Required, must be a valid tag ID
-- **Constraint:** Target tag cannot be in source list
-
-## 📞 Support
-
-For issues or questions:
-1. Check application logs in `logs/` directory
-2. Verify database connectivity
-3. Validate JWT token
-4. Review validation constraints
-5. Check category associations (photos)
-
-## 🎯 Best Practices
-
-### Categories
-1. **Always use unique slugs** - Helps with SEO and URL structure
-2. **Set display order** - Controls category ordering in UI
-3. **Use descriptive names** - Makes categories easy to understand
-4. **Add images** - Enhances visual presentation
-5. **Keep categories active** - Deactivate instead of delete when possible
-6. **Regular cleanup** - Remove empty categories periodically
-
-### Tags
-1. **Use consistent naming** - Tag names are automatically normalized to lowercase
-2. **Add descriptions** - Helps users understand tag purpose
-3. **Leverage get-or-create** - Use bulk operations for efficiency
-4. **Merge duplicates** - Consolidate similar tags regularly
-5. **Clean up unused tags** - Remove tags with zero usage periodically
-6. **Recalculate counts** - Run recalculate-usage if counts seem off
-7. **Use meaningful names** - Make tags searchable and intuitive
-8. **Avoid over-tagging** - Keep tag lists focused and relevant
-
-### General
-1. **Use pagination** - For large datasets, always use page/size parameters
-2. **Handle 404s gracefully** - Check existence before operations
-3. **Validate input** - Follow validation rules to avoid errors
-4. **Use search endpoints** - More efficient than fetching all and filtering
-5. **Monitor usage counts** - Track popular categories and tags
-6. **Batch operations** - Use bulk endpoints for multiple items
 
 ---
 
-**Happy Testing! 🎉**
+## 📝 Best Practices
+
+### Photo Management
+
+1. **Always set photographer ID** when creating photos
+2. **Use multipart upload** for new photos with files
+3. **Approve photos** before making them public
+4. **Track engagement** (views, downloads, likes) for analytics
+5. **Use featured flag** sparingly for homepage highlights
+6. **Set appropriate pricing** for different license types
+
+### Category Management
+
+1. **Use unique, descriptive names** for categories
+2. **Set display order** to control UI presentation
+3. **Add category images** for better visual hierarchy
+4. **Deactivate instead of delete** to preserve history
+5. **Check for empty categories** periodically for cleanup
+
+### Tag Management
+
+1. **Use consistent naming conventions** (lowercase, hyphenated)
+2. **Add descriptions** to clarify tag purpose
+3. **Leverage get-or-create** for bulk operations
+4. **Merge duplicate tags** to maintain data quality
+5. **Recalculate usage counts** if inconsistencies occur
+6. **Clean up unused tags** periodically
+
+### Search Optimization
+
+1. **Use specific search endpoints** instead of filtering all results
+2. **Leverage pagination** for large result sets
+3. **Combine filters** for precise results
+4. **Use quick search** for public-facing applications
+5. **Cache popular searches** for performance
+
+### Security
+
+1. **Always validate JWT tokens** on protected endpoints
+2. **Restrict admin operations** (approve, reject, featured)
+3. **Validate file uploads** for type and size
+4. **Sanitize user inputs** in search queries
+5. **Implement rate limiting** for public endpoints
+
+---
+
+## 📊 API Documentation
+
+**Swagger UI:** `http://localhost:8080/swagger-ui.html`  
+**OpenAPI Spec:** `http://localhost:8080/v3/api-docs`
+
+---
+
+## 🆘 Support
+
+For issues or questions:
+1. Check application logs
+2. Verify database connectivity
+3. Validate JWT token
+4. Review validation constraints
+5. Consult API documentation
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** December 2024  
+**Module:** Photo Management  
+**Platform:** Ceylon Wild Capture Backend

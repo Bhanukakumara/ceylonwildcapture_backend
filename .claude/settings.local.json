@@ -10,7 +10,10 @@
       "Bash(./mvnw clean compile:*)",
       "Bash(./mvnw test-compile:*)",
       "Bash(./mvnw compile:*)",
-      "Bash(./mvnw spring-boot:run:*)"
+      "Bash(./mvnw spring-boot:run:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(where:*)"
     ],
     "deny": [],
     "ask": []
