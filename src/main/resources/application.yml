@@ -13,3 +13,10 @@ jwt:
   expiration: ${JWT_EXPIRATION}          # 1 hour in milliseconds
   refresh-expiration: ${JWT_REFRESH_EXPIRATION} # 7 days in milliseconds
 
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  return-url: ${STRIPE_RETURN_URL:http://localhost:5173/orders}
+  cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/checkout}
+
+

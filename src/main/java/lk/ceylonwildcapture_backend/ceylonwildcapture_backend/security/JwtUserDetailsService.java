@@ -4,7 +4,7 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repos
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,7 +36,8 @@ public class JwtUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
         log.debug("Loading user by username or email: {}", usernameOrEmail);
 
-        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user = userRepository.findByEmailOrUsername(usernameOrEmail, usernameOrEmail)
+        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user = userRepository
+                .findByEmailOrUsername(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found with username or email: " + usernameOrEmail));
 
@@ -55,18 +56,15 @@ public class JwtUserDetailsService implements UserDetailsService {
      * @param user User entity
      * @return UserDetails object
      */
-    private UserDetails createUserDetails(lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user) {
+    private UserDetails createUserDetails(
+            lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user) {
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
 
-        return User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .authorities(Collections.singletonList(authority))
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(!user.getIsActive())
-                .build();
+        return new CustomUserDetails(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                Collections.singletonList(authority));
     }
 
     /**
@@ -80,7 +78,8 @@ public class JwtUserDetailsService implements UserDetailsService {
     public UserDetails loadUserById(Long userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
 
-        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user = userRepository.findById(userId)
+        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
 
         if (!user.getIsActive()) {

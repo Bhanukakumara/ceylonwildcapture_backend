@@ -23,11 +23,29 @@ public class PaymentWebhookController {
     private final PaymentWebhookService webhookService;
 
     /**
+     * Handle webhook at base path (defaults to Stripe).
+     * This is for Stripe CLI compatibility.
+     *
+     * @param payload   webhook payload
+     * @param signature Stripe signature header
+     * @param request   HTTP request
+     * @return webhook event
+     */
+    @PostMapping
+    public ResponseEntity<WebhookEventDto> handleWebhook(
+            @RequestBody String payload,
+            @RequestHeader(value = "Stripe-Signature", required = false) String signature,
+            HttpServletRequest request) {
+        // Default to Stripe webhook handler
+        return handleStripeWebhook(payload, signature, request);
+    }
+
+    /**
      * Handle Stripe webhook.
      *
-     * @param payload webhook payload
+     * @param payload   webhook payload
      * @param signature Stripe signature header
-     * @param request HTTP request
+     * @param request   HTTP request
      * @return webhook event
      */
     @PostMapping("/stripe")
@@ -44,9 +62,9 @@ public class PaymentWebhookController {
     /**
      * Handle PayPal webhook.
      *
-     * @param payload webhook payload
+     * @param payload   webhook payload
      * @param signature PayPal signature header
-     * @param request HTTP request
+     * @param request   HTTP request
      * @return webhook event
      */
     @PostMapping("/paypal")
@@ -63,9 +81,9 @@ public class PaymentWebhookController {
     /**
      * Handle Razorpay webhook.
      *
-     * @param payload webhook payload
+     * @param payload   webhook payload
      * @param signature Razorpay signature header
-     * @param request HTTP request
+     * @param request   HTTP request
      * @return webhook event
      */
     @PostMapping("/razorpay")
@@ -96,7 +114,7 @@ public class PaymentWebhookController {
      * Get webhook events by payment ID (admin only).
      *
      * @param paymentId payment ID
-     * @param pageable pagination parameters
+     * @param pageable  pagination parameters
      * @return page of webhook events
      */
     @GetMapping("/payment/{paymentId}")

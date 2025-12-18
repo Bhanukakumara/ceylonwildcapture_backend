@@ -4,6 +4,8 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.UserR
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.UserManagementDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.service.UserManagementService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +15,10 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserManagementServiceImpl implements UserManagementService {
+
+    private final UserRepository userRepository;
 
     @Override
     public User manageUser(UserManagementDto managementDto, Long adminId) {
@@ -95,7 +100,21 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     public Page<User> getAllUsers(UserRole role, Boolean isActive, Pageable pageable) {
-        // TODO: Implement actual business logic
-        return new PageImpl<>(Collections.emptyList());
+        // If both filters are provided
+        if (role != null && isActive != null) {
+            return userRepository.findByRoleAndIsActive(role, isActive, pageable);
+        }
+        // If only role filter is provided
+        else if (role != null) {
+            return userRepository.findByRole(role, pageable);
+        }
+        // If only isActive filter is provided
+        else if (isActive != null) {
+            return userRepository.findByIsActive(isActive, pageable);
+        }
+        // If no filters are provided, return all users
+        else {
+            return userRepository.findAll(pageable);
+        }
     }
 }

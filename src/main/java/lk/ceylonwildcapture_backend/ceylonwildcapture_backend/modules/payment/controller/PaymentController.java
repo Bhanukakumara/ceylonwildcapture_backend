@@ -29,11 +29,11 @@ public class PaymentController {
      * Create payment intent.
      *
      * @param requestDto payment intent request
-     * @param userId authenticated user ID
+     * @param userId     authenticated user ID
      * @return payment intent response
      */
     @PostMapping("/intent")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<PaymentIntentResponseDto> createPaymentIntent(
             @Valid @RequestBody CreatePaymentIntentRequestDto requestDto,
             @RequestAttribute("userId") Long userId) {
@@ -45,11 +45,11 @@ public class PaymentController {
      * Get payment by ID.
      *
      * @param paymentId payment ID
-     * @param userId authenticated user ID
+     * @param userId    authenticated user ID
      * @return payment response
      */
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<PaymentResponseDto> getPayment(
             @PathVariable Long paymentId,
             @RequestAttribute("userId") Long userId) {
@@ -64,7 +64,7 @@ public class PaymentController {
      * @return payment response
      */
     @GetMapping("/provider/{providerPaymentId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<PaymentResponseDto> getPaymentByProviderPaymentId(@PathVariable String providerPaymentId) {
         PaymentResponseDto response = paymentService.getPaymentByProviderPaymentId(providerPaymentId);
         return ResponseEntity.ok(response);
@@ -77,7 +77,7 @@ public class PaymentController {
      * @return payment response
      */
     @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<PaymentResponseDto> getPaymentByOrderId(@PathVariable Long orderId) {
         PaymentResponseDto response = paymentService.getPaymentByOrderId(orderId);
         return ResponseEntity.ok(response);
@@ -86,12 +86,12 @@ public class PaymentController {
     /**
      * Get current user's payments.
      *
-     * @param userId authenticated user ID
+     * @param userId   authenticated user ID
      * @param pageable pagination parameters
      * @return page of payment responses
      */
     @GetMapping("/my-payments")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Page<PaymentResponseDto>> getMyPayments(
             @RequestAttribute("userId") Long userId,
             Pageable pageable) {
@@ -102,7 +102,7 @@ public class PaymentController {
     /**
      * Get payments by status (admin only).
      *
-     * @param status payment status
+     * @param status   payment status
      * @param pageable pagination parameters
      * @return page of payment responses
      */
@@ -119,8 +119,8 @@ public class PaymentController {
      * Get payments by date range (admin only).
      *
      * @param startDate start date
-     * @param endDate end date
-     * @param pageable pagination parameters
+     * @param endDate   end date
+     * @param pageable  pagination parameters
      * @return page of payment responses
      */
     @GetMapping("/date-range")
@@ -150,11 +150,11 @@ public class PaymentController {
      * Cancel payment.
      *
      * @param paymentId payment ID
-     * @param userId authenticated user ID
+     * @param userId    authenticated user ID
      * @return updated payment response
      */
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<PaymentResponseDto> cancelPayment(
             @PathVariable Long paymentId,
             @RequestAttribute("userId") Long userId) {
@@ -166,7 +166,7 @@ public class PaymentController {
      * Search payments (admin only).
      *
      * @param searchTerm search term
-     * @param pageable pagination parameters
+     * @param pageable   pagination parameters
      * @return page of payment responses
      */
     @GetMapping("/search")
@@ -185,7 +185,7 @@ public class PaymentController {
      * @return payment count
      */
     @GetMapping("/my-payments/count")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Long> getMyPaymentCount(@RequestAttribute("userId") Long userId) {
         long count = paymentService.countUserPayments(userId);
         return ResponseEntity.ok(count);

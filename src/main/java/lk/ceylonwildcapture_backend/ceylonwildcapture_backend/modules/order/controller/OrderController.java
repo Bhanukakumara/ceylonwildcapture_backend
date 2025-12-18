@@ -24,15 +24,16 @@ import java.time.LocalDateTime;
 public class OrderController {
 
     private final OrderService orderService;
+
     /**
      * Create a new order.
      *
      * @param requestDto order creation request
-     * @param userId authenticated user ID
+     * @param userId     authenticated user ID
      * @return created order response
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<OrderResponseDto> createOrder(
             @Valid @RequestBody CreateOrderRequestDto requestDto,
             @RequestAttribute("userId") Long userId) {
@@ -44,11 +45,11 @@ public class OrderController {
      * Get order by ID.
      *
      * @param orderId order ID
-     * @param userId authenticated user ID
+     * @param userId  authenticated user ID
      * @return order response
      */
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<OrderResponseDto> getOrder(
             @PathVariable Long orderId,
             @RequestAttribute("userId") Long userId) {
@@ -60,11 +61,11 @@ public class OrderController {
      * Get order by order number.
      *
      * @param orderNumber order number
-     * @param userId authenticated user ID
+     * @param userId      authenticated user ID
      * @return order response
      */
     @GetMapping("/number/{orderNumber}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<OrderResponseDto> getOrderByNumber(
             @PathVariable String orderNumber,
             @RequestAttribute("userId") Long userId) {
@@ -75,12 +76,12 @@ public class OrderController {
     /**
      * Get current user's orders.
      *
-     * @param userId authenticated user ID
+     * @param userId   authenticated user ID
      * @param pageable pagination parameters
      * @return page of order summaries
      */
     @GetMapping("/my-orders")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Page<OrderSummaryDto>> getMyOrders(
             @RequestAttribute("userId") Long userId,
             Pageable pageable) {
@@ -91,13 +92,13 @@ public class OrderController {
     /**
      * Get current user's orders by status.
      *
-     * @param userId authenticated user ID
-     * @param status order status
+     * @param userId   authenticated user ID
+     * @param status   order status
      * @param pageable pagination parameters
      * @return page of orders
      */
     @GetMapping("/my-orders/status/{status}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Page<OrderResponseDto>> getMyOrdersByStatus(
             @RequestAttribute("userId") Long userId,
             @PathVariable OrderStatus status,
@@ -109,12 +110,12 @@ public class OrderController {
     /**
      * Get current user's completed orders.
      *
-     * @param userId authenticated user ID
+     * @param userId   authenticated user ID
      * @param pageable pagination parameters
      * @return page of completed orders
      */
     @GetMapping("/my-orders/completed")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Page<OrderResponseDto>> getMyCompletedOrders(
             @RequestAttribute("userId") Long userId,
             Pageable pageable) {
@@ -125,7 +126,7 @@ public class OrderController {
     /**
      * Update order status.
      *
-     * @param orderId order ID
+     * @param orderId   order ID
      * @param statusDto status update request
      * @return updated order
      */
@@ -142,11 +143,11 @@ public class OrderController {
      * Cancel an order.
      *
      * @param orderId order ID
-     * @param userId authenticated user ID
+     * @param userId  authenticated user ID
      * @return cancelled order
      */
     @PostMapping("/{orderId}/cancel")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<OrderResponseDto> cancelOrder(
             @PathVariable Long orderId,
             @RequestAttribute("userId") Long userId) {
@@ -157,13 +158,13 @@ public class OrderController {
     /**
      * Process payment success callback.
      *
-     * @param orderId order ID
-     * @param paymentId payment ID
+     * @param orderId       order ID
+     * @param paymentId     payment ID
      * @param transactionId transaction ID
      * @return updated order
      */
     @PostMapping("/{orderId}/payment-success")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<OrderResponseDto> processPaymentSuccess(
             @PathVariable Long orderId,
             @RequestParam String paymentId,
@@ -176,11 +177,11 @@ public class OrderController {
      * Process payment failure callback.
      *
      * @param orderId order ID
-     * @param reason failure reason
+     * @param reason  failure reason
      * @return updated order
      */
     @PostMapping("/{orderId}/payment-failure")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<OrderResponseDto> processPaymentFailure(
             @PathVariable Long orderId,
             @RequestParam String reason) {
@@ -207,14 +208,14 @@ public class OrderController {
     /**
      * Get orders by date range.
      *
-     * @param userId authenticated user ID
+     * @param userId    authenticated user ID
      * @param startDate start date
-     * @param endDate end date
-     * @param pageable pagination parameters
+     * @param endDate   end date
+     * @param pageable  pagination parameters
      * @return page of orders
      */
     @GetMapping("/my-orders/date-range")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Page<OrderResponseDto>> getOrdersByDateRange(
             @RequestAttribute("userId") Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -231,7 +232,7 @@ public class OrderController {
      * @return order count
      */
     @GetMapping("/my-orders/count")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Long> getMyOrderCount(@RequestAttribute("userId") Long userId) {
         long count = orderService.countUserOrders(userId);
         return ResponseEntity.ok(count);
@@ -241,11 +242,11 @@ public class OrderController {
      * Validate order before payment.
      *
      * @param orderId order ID
-     * @param userId authenticated user ID
+     * @param userId  authenticated user ID
      * @return validation result
      */
     @GetMapping("/{orderId}/validate")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
     public ResponseEntity<Boolean> validateOrder(
             @PathVariable Long orderId,
             @RequestAttribute("userId") Long userId) {
