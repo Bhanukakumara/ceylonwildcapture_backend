@@ -81,7 +81,7 @@ public class OrderController {
      * @return page of order summaries
      */
     @GetMapping("/my-orders")
-    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<Page<OrderSummaryDto>> getMyOrders(
             @RequestAttribute("userId") Long userId,
             Pageable pageable) {
@@ -98,7 +98,7 @@ public class OrderController {
      * @return page of orders
      */
     @GetMapping("/my-orders/status/{status}")
-    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<Page<OrderResponseDto>> getMyOrdersByStatus(
             @RequestAttribute("userId") Long userId,
             @PathVariable OrderStatus status,
@@ -115,7 +115,7 @@ public class OrderController {
      * @return page of completed orders
      */
     @GetMapping("/my-orders/completed")
-    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<Page<OrderResponseDto>> getMyCompletedOrders(
             @RequestAttribute("userId") Long userId,
             Pageable pageable) {
@@ -215,7 +215,7 @@ public class OrderController {
      * @return page of orders
      */
     @GetMapping("/my-orders/date-range")
-    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<Page<OrderResponseDto>> getOrdersByDateRange(
             @RequestAttribute("userId") Long userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -232,7 +232,7 @@ public class OrderController {
      * @return order count
      */
     @GetMapping("/my-orders/count")
-    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER')")
+    @PreAuthorize("hasAnyRole('BUYER', 'PHOTOGRAPHER', 'ADMIN')")
     public ResponseEntity<Long> getMyOrderCount(@RequestAttribute("userId") Long userId) {
         long count = orderService.countUserOrders(userId);
         return ResponseEntity.ok(count);

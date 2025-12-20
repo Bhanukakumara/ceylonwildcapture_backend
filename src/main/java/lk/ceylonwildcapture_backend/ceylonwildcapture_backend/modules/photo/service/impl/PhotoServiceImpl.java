@@ -1,6 +1,7 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.impl;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.search.PhotoSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.dto.photo.*;
@@ -73,6 +74,17 @@ public class PhotoServiceImpl implements PhotoService {
             throw new IllegalArgumentException("File is empty");
         }
 
+        // Validate file type
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("File must be an image (JPEG, PNG, etc.)");
+        }
+
+        // Validate file size (10MB max)
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size must be less than 10MB");
+        }
+
         // Get photographer
         User photographer = userRepository.findById(photoCreateDto.getPhotographerId())
                 .orElseThrow(
@@ -84,21 +96,62 @@ public class PhotoServiceImpl implements PhotoService {
             uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
-                            "folder", "photos",
-                            "resource_type", "image"));
+                            "folder", "ceylonwild/photos",
+                            "resource_type", "image",
+                            "quality", "auto",
+                            "fetch_format", "auto"));
         } catch (IOException e) {
-            throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
+            log.error("Cloudinary upload failed", e);
+            throw new RuntimeException("Failed to upload image to cloud storage: " + e.getMessage());
         }
 
+        // Extract metadata from Cloudinary response
         String imageUrl = (String) uploadResult.get("secure_url");
+        String publicId = (String) uploadResult.get("public_id");
+        Integer width = (Integer) uploadResult.get("width");
+        Integer height = (Integer) uploadResult.get("height");
+        String format = (String) uploadResult.get("format");
+        Long fileSize = file.getSize();
+
+        // Generate thumbnail URL (300x200, cropped to fill)
+        String thumbnailUrl = cloudinary.url()
+                .transformation(new com.cloudinary.Transformation()
+                        .width(300)
+                        .height(200)
+                        .crop("fill")
+                        .quality("auto")
+                        .fetchFormat("auto"))
+                .generate(publicId);
+
+        // Generate watermarked URL
+        // Text watermark: "CEYLON WILD CAPTURE", centered, 30% opacity
+        String watermarkedUrl = cloudinary.url()
+                .transformation(new Transformation()
+                        .overlay("text:Arial_80_bold:CEYLON WILD CAPTURE")
+                        .gravity("center")
+                        .opacity(40)
+                        .angle(-45)
+                        .chain() // Apply gravity, opacity and angle to the text layer
+                        .quality("auto")
+                        .fetchFormat("auto"))
+                .generate(publicId);
+
+        log.info("Image uploaded - URL: {}, Size: {}x{}, Format: {}, FileSize: {} bytes",
+                imageUrl, width, height, format, fileSize);
 
         // Build and save photo entity
         Photo photo = buildPhotoFromCreateDto(photoCreateDto, photographer, imageUrl);
         photo.setImageUrl(imageUrl);
+        photo.setThumbnailUrl(thumbnailUrl);
+        photo.setWatermarkedUrl(watermarkedUrl);
+        photo.setWidth(width);
+        photo.setHeight(height);
+        photo.setFormat(format != null ? format.toUpperCase() : "JPEG");
+        photo.setFileSize(fileSize);
 
         // Save photo
         Photo saved = photoRepository.save(photo);
-        log.info("Photo uploaded successfully with ID: {}", saved.getId());
+        log.info("Photo uploaded successfully with ID: {}, pending approval", saved.getId());
 
         return PhotoResponseDto.fromEntity(saved);
     }

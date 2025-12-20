@@ -297,8 +297,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderSummaryDto> getUserOrders(Long userId, Pageable pageable) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Page<Order> orders = orderRepository.findByBuyerId(userId, pageable);
+        return orders.map(this::mapToSummaryDto);
     }
 
     @Override
@@ -405,6 +407,23 @@ public class OrderServiceImpl implements OrderService {
                 .licenseType(item.getLicenseType())
                 .price(item.getPrice())
                 .finalPrice(item.getFinalPrice())
+                .build();
+    }
+
+    private OrderSummaryDto mapToSummaryDto(Order order) {
+        String firstPhotoThumbnail = null;
+        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            firstPhotoThumbnail = order.getOrderItems().get(0).getPhoto().getThumbnailUrl();
+        }
+
+        return OrderSummaryDto.builder()
+                .id(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .itemCount(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
+                .firstPhotoThumbnail(firstPhotoThumbnail)
+                .createdAt(order.getCreatedAt())
                 .build();
     }
 }
