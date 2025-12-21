@@ -13,7 +13,6 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repo
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repository.TagRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.FileStorageService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoService;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository.OrderRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +41,6 @@ public class PhotoServiceImpl implements PhotoService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final Cloudinary cloudinary;
-    private final lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository.OrderRepository orderRepository;
-
     @Autowired(required = false)
     private FileStorageService fileStorageService;
 
@@ -63,7 +60,6 @@ public class PhotoServiceImpl implements PhotoService {
         this.tagRepository = tagRepository;
         this.categoryRepository = categoryRepository;
         this.cloudinary = cloudinary;
-        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -119,7 +115,7 @@ public class PhotoServiceImpl implements PhotoService {
 
         // Generate thumbnail URL (300x200, cropped to fill)
         String thumbnailUrl = cloudinary.url()
-                .transformation(new com.cloudinary.Transformation()
+                .transformation(new com.cloudinary.Transformation<>()
                         .width(300)
                         .height(200)
                         .crop("fill")
@@ -130,7 +126,7 @@ public class PhotoServiceImpl implements PhotoService {
         // Generate watermarked URL
         // Text watermark: "CEYLON WILD CAPTURE", centered, 30% opacity
         String watermarkedUrl = cloudinary.url()
-                .transformation(new Transformation()
+                .transformation(new Transformation<>()
                         .overlay("text:Arial_80_bold:CEYLON WILD CAPTURE")
                         .gravity("center")
                         .opacity(40)
