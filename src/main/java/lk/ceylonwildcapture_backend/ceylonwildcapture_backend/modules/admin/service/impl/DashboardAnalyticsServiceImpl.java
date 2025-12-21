@@ -85,13 +85,6 @@ public class DashboardAnalyticsServiceImpl implements DashboardAnalyticsService 
         long totalOrders = orderRepository
                 .findByCreatedAtBetween(startDateTime, endDateTime, PageRequest.of(0, Integer.MAX_VALUE))
                 .getTotalElements();
-        long pendingOrders = orderRepository
-                .findByStatusOrderByCreatedAtDesc(OrderStatus.PENDING, PageRequest.of(0, Integer.MAX_VALUE))
-                .getTotalElements();
-        long completedOrders = orderRepository
-                .findByStatusOrderByCreatedAtDesc(OrderStatus.COMPLETED, PageRequest.of(0, Integer.MAX_VALUE))
-                .getTotalElements();
-
         // Revenue Statistics (filtered by date range)
         BigDecimal totalRevenue = orderRepository
                 .findByCreatedAtBetween(startDateTime, endDateTime, PageRequest.of(0, Integer.MAX_VALUE))

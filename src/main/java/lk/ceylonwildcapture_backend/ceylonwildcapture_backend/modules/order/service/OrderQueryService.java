@@ -25,9 +25,18 @@ public interface OrderQueryService {
     Page<OrderSummaryDto> getAllOrders(Pageable pageable);
 
     /**
+     * Get order summaries by status.
+     *
+     * @param status   order status
+     * @param pageable pagination parameters
+     * @return page of order summaries
+     */
+    Page<OrderSummaryDto> getOrdersByStatusSummary(OrderStatus status, Pageable pageable);
+
+    /**
      * Get orders by status.
      *
-     * @param status order status
+     * @param status   order status
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -36,7 +45,7 @@ public interface OrderQueryService {
     /**
      * Get orders by buyer.
      *
-     * @param buyerId buyer ID
+     * @param buyerId  buyer ID
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -46,7 +55,7 @@ public interface OrderQueryService {
      * Get orders by photographer.
      *
      * @param photographerId photographer ID
-     * @param pageable pagination parameters
+     * @param pageable       pagination parameters
      * @return page of orders
      */
     Page<OrderResponseDto> getOrdersByPhotographer(Long photographerId, Pageable pageable);
@@ -54,7 +63,7 @@ public interface OrderQueryService {
     /**
      * Get orders by photo.
      *
-     * @param photoId photo ID
+     * @param photoId  photo ID
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -64,8 +73,8 @@ public interface OrderQueryService {
      * Get orders by date range.
      *
      * @param startDate start date
-     * @param endDate end date
-     * @param pageable pagination parameters
+     * @param endDate   end date
+     * @param pageable  pagination parameters
      * @return page of orders
      */
     Page<OrderResponseDto> getOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);

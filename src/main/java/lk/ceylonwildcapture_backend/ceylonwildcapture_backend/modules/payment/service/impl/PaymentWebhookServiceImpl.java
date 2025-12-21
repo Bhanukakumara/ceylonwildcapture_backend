@@ -59,6 +59,7 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                     .build();
 
             webhookEventRepository.save(webhookEvent);
+            log.info("Saved webhook event: {} (Type: {})", webhookEvent.getEventId(), event.getType());
 
             processStripeEvent(event, webhookEvent);
 
@@ -75,9 +76,25 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
     private void processStripeEvent(Event event, WebhookEvent webhookEvent) {
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
-        StripeObject stripeObject = dataObjectDeserializer.getObject().orElse(null);
+
+        StripeObject stripeObject = null;
+        if (dataObjectDeserializer.getObject().isPresent()) {
+            stripeObject = dataObjectDeserializer.getObject().get();
+        } else {
+            log.warn(
+                    "Stripe API Version mismatch detected for event {}. Event API Version: {}. Attempting unsafe deserialization.",
+                    event.getId(), event.getApiVersion());
+            try {
+                stripeObject = dataObjectDeserializer.deserializeUnsafe();
+            } catch (Exception e) {
+                log.error("Failed to perform unsafe deserialization for event {}: {}", event.getId(), e.getMessage());
+            }
+        }
 
         if (stripeObject == null) {
+            String rawJson = dataObjectDeserializer.getRawJson();
+            log.error("CRITICAL: Could not deserialize Stripe object for event {}. Raw JSON: {}", event.getId(),
+                    rawJson);
             markEventAsFailed(webhookEvent.getId(), "Could not deserialize Stripe object");
             return;
         }
@@ -85,10 +102,10 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
         try {
             switch (event.getType()) {
                 case "checkout.session.completed":
-                    handleCheckoutSessionCompleted((Session) stripeObject);
+                    handleCheckoutSessionCompleted((Session) stripeObject, webhookEvent);
                     break;
                 case "checkout.session.async_payment_succeeded":
-                    handleCheckoutSessionCompleted((Session) stripeObject);
+                    handleCheckoutSessionCompleted((Session) stripeObject, webhookEvent);
                     break;
                 case "checkout.session.async_payment_failed":
                     Session session = (Session) stripeObject;
@@ -98,14 +115,28 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                     log.info("Unhandled Stripe event type: {}", event.getType());
             }
             markEventAsProcessed(webhookEvent.getId());
+            log.info("Successfully processed webhook event: {}", event.getId());
         } catch (Exception e) {
+            log.error("Failed to process webhook event {}. Error: {}", event.getId(), e.getMessage(), e);
             markEventAsFailed(webhookEvent.getId(), e.getMessage());
         }
     }
 
-    private void handleCheckoutSessionCompleted(Session session) {
+    private void handleCheckoutSessionCompleted(Session session, WebhookEvent webhookEvent) {
         String sessionId = session.getId();
         String transactionId = session.getPaymentIntent();
+        log.info("Handling checkout.session.completed for session: {}, paymentIntent: {}", sessionId, transactionId);
+
+        if (transactionId == null) {
+            log.warn("PaymentIntent ID is null in Stripe Session {}. Using sessionId as transactionId fallback.",
+                    sessionId);
+            transactionId = sessionId; // Fallback
+        }
+
+        // Update WebhookEvent with paymentId for better traceability
+        webhookEvent.setPaymentId(sessionId);
+        webhookEventRepository.save(webhookEvent);
+
         paymentService.markPaymentSuccess(sessionId, transactionId);
     }
 

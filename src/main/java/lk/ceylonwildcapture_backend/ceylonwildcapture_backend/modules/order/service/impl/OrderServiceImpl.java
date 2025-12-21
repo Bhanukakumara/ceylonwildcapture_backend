@@ -376,6 +376,8 @@ public class OrderServiceImpl implements OrderService {
                 .taxAmount(order.getTaxAmount())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
+                .paymentId(order.getPaymentId())
+                .transactionId(order.getTransactionId())
                 .billingInfo(mapToBillingInfoDto(order))
                 .createdAt(order.getCreatedAt())
                 .itemCount(order.getOrderItems().size())
@@ -396,7 +398,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderItemResponseDto mapToOrderItemResponseDto(OrderItem item) {
-        return OrderItemResponseDto.builder()
+        OrderItemResponseDto.OrderItemResponseDtoBuilder builder = OrderItemResponseDto.builder()
                 .id(item.getId())
                 .photoId(item.getPhoto().getId())
                 .photoTitle(item.getPhoto().getTitle())
@@ -406,8 +408,13 @@ public class OrderServiceImpl implements OrderService {
                         + item.getPhoto().getPhotographer().getLastName())
                 .licenseType(item.getLicenseType())
                 .price(item.getPrice())
-                .finalPrice(item.getFinalPrice())
-                .build();
+                .finalPrice(item.getFinalPrice());
+
+        if (item.getOrder().getStatus() == OrderStatus.COMPLETED) {
+            builder.photoOriginalUrl(item.getPhoto().getImageUrl());
+        }
+
+        return builder.build();
     }
 
     private OrderSummaryDto mapToSummaryDto(Order order) {
@@ -419,9 +426,13 @@ public class OrderServiceImpl implements OrderService {
         return OrderSummaryDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .buyerName(order.getBillingName())
+                .buyerEmail(order.getBillingEmail())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .itemCount(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
+                .paymentMethod(order.getPaymentMethod())
+                .transactionId(order.getTransactionId())
                 .firstPhotoThumbnail(firstPhotoThumbnail)
                 .createdAt(order.getCreatedAt())
                 .build();

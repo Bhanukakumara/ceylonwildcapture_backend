@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * REST controller for payment webhook operations.
  */
 @RestController
-@RequestMapping("/api/v1/payments/webhook")
+@RequestMapping({ "/api/v1/payments/webhook", "/api/payment/webhook" })
 @RequiredArgsConstructor
 public class PaymentWebhookController {
 
