@@ -50,6 +50,7 @@ public class SecurityConfig {
                                                 // Public endpoints
                                                 .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/api/public/**").permitAll()
+                                                .requestMatchers("/api/v1/public/**").permitAll()
                                                 .requestMatchers("/api/v1/users/register-first-admin").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll() // Allow
                                                                                                                // public

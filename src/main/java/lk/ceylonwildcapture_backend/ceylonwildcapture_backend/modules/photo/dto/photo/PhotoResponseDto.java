@@ -65,6 +65,20 @@ public class PhotoResponseDto {
      * @return PhotoResponseDto
      */
     public static PhotoResponseDto fromEntity(Photo photo) {
+        return fromEntitySecure(photo, false);
+    }
+
+    /**
+     * Static method to convert Photo entity to PhotoResponseDto with security
+     * controls.
+     * Only includes full-resolution imageUrl if user has purchased the photo.
+     *
+     * @param photo               the photo entity
+     * @param includePurchasedUrl whether to include the full-resolution imageUrl
+     *                            (only for purchasers)
+     * @return PhotoResponseDto
+     */
+    public static PhotoResponseDto fromEntitySecure(Photo photo, boolean includePurchasedUrl) {
         if (photo == null) {
             return null;
         }
@@ -73,7 +87,9 @@ public class PhotoResponseDto {
                 .id(photo.getId())
                 .title(photo.getTitle())
                 .description(photo.getDescription())
-                .imageUrl(photo.getImageUrl())
+                // Only include full imageUrl if user has purchased
+                .imageUrl(includePurchasedUrl ? photo.getImageUrl() : null)
+                // Always include watermarked and thumbnail URLs for preview
                 .thumbnailUrl(photo.getThumbnailUrl())
                 .watermarkedUrl(photo.getWatermarkedUrl())
                 .photographerId(photo.getPhotographer() != null ? photo.getPhotographer().getId() : null)
@@ -102,19 +118,18 @@ public class PhotoResponseDto {
                 .captureDate(photo.getCaptureDate())
                 .createdAt(photo.getCreatedAt())
                 .updatedAt(photo.getUpdatedAt())
-                .tags(photo.getTags() != null ? 
-                        photo.getTags().stream()
-                                .map(TagResponseDto::fromEntity)
-                                .collect(Collectors.toList()) : null)
-                .categories(photo.getCategories() != null ? 
-                        photo.getCategories().stream()
-                                .map(CategoryResponseDto::fromEntity)
-                                .collect(Collectors.toList()) : null)
+                .tags(photo.getTags() != null ? photo.getTags().stream()
+                        .map(TagResponseDto::fromEntity)
+                        .collect(Collectors.toList()) : null)
+                .categories(photo.getCategories() != null ? photo.getCategories().stream()
+                        .map(CategoryResponseDto::fromEntity)
+                        .collect(Collectors.toList()) : null)
                 .build();
     }
 
     /**
-     * Static method to convert Photo entity to PhotoResponseDto without nested collections.
+     * Static method to convert Photo entity to PhotoResponseDto without nested
+     * collections.
      *
      * @param photo the photo entity
      * @return PhotoResponseDto without tags and categories

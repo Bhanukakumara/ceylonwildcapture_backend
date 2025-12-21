@@ -13,6 +13,7 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repo
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.repository.TagRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.FileStorageService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoService;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository.OrderRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class PhotoServiceImpl implements PhotoService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final Cloudinary cloudinary;
+    private final lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository.OrderRepository orderRepository;
 
     @Autowired(required = false)
     private FileStorageService fileStorageService;
@@ -54,12 +56,14 @@ public class PhotoServiceImpl implements PhotoService {
             UserRepository userRepository,
             TagRepository tagRepository,
             CategoryRepository categoryRepository,
-            Cloudinary cloudinary) {
+            Cloudinary cloudinary,
+            lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository.OrderRepository orderRepository) {
         this.photoRepository = photoRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
         this.categoryRepository = categoryRepository;
         this.cloudinary = cloudinary;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -289,7 +293,7 @@ public class PhotoServiceImpl implements PhotoService {
     public Page<PhotoResponseDto> getAllPhotos(Pageable pageable) {
         log.debug("Getting all photos with pagination");
         return photoRepository.findAll(pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
@@ -313,7 +317,7 @@ public class PhotoServiceImpl implements PhotoService {
     public Page<PhotoResponseDto> getApprovedAndActivePhotos(Pageable pageable) {
         log.debug("Getting approved and active photos");
         return photoRepository.findByIsApprovedAndIsActive(true, true, pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
@@ -321,7 +325,7 @@ public class PhotoServiceImpl implements PhotoService {
     public Page<PhotoResponseDto> getFeaturedPhotos(Pageable pageable) {
         log.debug("Getting featured photos");
         return photoRepository.findByIsFeatured(true, pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
@@ -579,7 +583,7 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(readOnly = true)
     public Page<PhotoResponseDto> getRecentlyUploadedPhotos(Pageable pageable) {
         return photoRepository.findAllByOrderByCreatedAtDesc(pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
@@ -605,7 +609,7 @@ public class PhotoServiceImpl implements PhotoService {
     public Page<PhotoResponseDto> getPhotosByCategory(String categorySlug, Pageable pageable) {
         log.debug("Getting photos by category slug: {}", categorySlug);
         return photoRepository.findByCategorySlug(categorySlug, pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
@@ -638,7 +642,7 @@ public class PhotoServiceImpl implements PhotoService {
     public Page<PhotoResponseDto> searchPhotos(String searchTerm, Pageable pageable) {
         log.debug("Searching photos with term: {}", searchTerm);
         return photoRepository.searchByTitleOrDescription(searchTerm, pageable)
-                .map(PhotoResponseDto::fromEntitySimple);
+                .map(PhotoResponseDto::fromEntity);
     }
 
     @Override
