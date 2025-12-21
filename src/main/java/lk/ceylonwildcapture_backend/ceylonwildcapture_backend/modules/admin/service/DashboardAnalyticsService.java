@@ -21,7 +21,7 @@ public interface DashboardAnalyticsService {
      * Get dashboard analytics for a specific date range.
      *
      * @param startDate start date
-     * @param endDate end date
+     * @param endDate   end date
      * @return dashboard analytics DTO
      */
     DashboardAnalyticsDto getDashboardAnalytics(LocalDate startDate, LocalDate endDate);
@@ -112,4 +112,22 @@ public interface DashboardAnalyticsService {
     Map<String, Object> getDailyTrends(LocalDate startDate, LocalDate endDate);
 
     Map<String, Object> getCategoryPerformance(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Get category performance data.
+     *
+     * @param limit number of categories to retrieve
+     * @return list of category performance data
+     */
+    java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.CategoryPerformanceDto> getCategoryPerformance(
+            int limit);
+
+    /**
+     * Get recent activity.
+     *
+     * @param limit number of activities to retrieve
+     * @return list of recent activities
+     */
+    java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.RecentActivityDto> getRecentActivity(
+            int limit);
 }
