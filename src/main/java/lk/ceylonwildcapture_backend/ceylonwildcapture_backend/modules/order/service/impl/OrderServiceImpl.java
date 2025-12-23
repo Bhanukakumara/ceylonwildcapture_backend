@@ -314,8 +314,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto updateStatus(Long orderId, @Valid UpdateOrderStatusRequestDto statusDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.info("Updating order {} status to {}", orderId, statusDto.getStatus());
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Update status
+        order.setStatus(statusDto.getStatus());
+
+        // Update payment information if provided
+        if (statusDto.getPaymentId() != null) {
+            order.setPaymentId(statusDto.getPaymentId());
+        }
+        if (statusDto.getTransactionId() != null) {
+            order.setTransactionId(statusDto.getTransactionId());
+        }
+
+        // Set completion timestamp if order is completed
+        if (statusDto.getStatus() == OrderStatus.COMPLETED && order.getCompletedAt() == null) {
+            order.setCompletedAt(LocalDateTime.now());
+        }
+
+        // Set cancellation timestamp if order is cancelled
+        if (statusDto.getStatus() == OrderStatus.CANCELLED && order.getCancelledAt() == null) {
+            order.setCancelledAt(LocalDateTime.now());
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order {} status updated successfully to {}", orderId, statusDto.getStatus());
+
+        return mapToResponseDto(savedOrder);
     }
 
     @Override
