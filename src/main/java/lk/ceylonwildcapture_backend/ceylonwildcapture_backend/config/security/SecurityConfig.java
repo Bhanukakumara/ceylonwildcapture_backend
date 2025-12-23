@@ -62,8 +62,11 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/categories/**").permitAll()
                                                 .requestMatchers("/api/v1/tags/**").permitAll()
                                                 .requestMatchers("/api/v1/photos/**").permitAll()
-                                                .requestMatchers("/api/v1/payments/webhook").permitAll() // Stripe
-                                                                                                         // webhook
+                                                .requestMatchers("/api/v1/payments/webhook",
+                                                                "/api/v1/payments/webhook/**")
+                                                .permitAll() // Stripe webhook (Plural)
+                                                .requestMatchers("/api/payment/webhook", "/api/payment/webhook/**")
+                                                .permitAll() // Webhook alias (Singular)
 
                                                 // Admin endpoints
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

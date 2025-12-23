@@ -25,6 +25,7 @@ public class OrderItemResponseDto {
     private Long photoId;
     private String photoTitle;
     private String photoThumbnailUrl;
+    private String photoOriginalUrl;
     private Long photographerId;
     private String photographerName;
     private LicenseType licenseType;

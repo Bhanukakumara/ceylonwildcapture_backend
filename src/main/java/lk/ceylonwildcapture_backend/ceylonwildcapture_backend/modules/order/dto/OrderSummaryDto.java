@@ -22,9 +22,13 @@ public class OrderSummaryDto {
 
     private Long id;
     private String orderNumber;
+    private String buyerName;
+    private String buyerEmail;
     private BigDecimal totalAmount;
     private OrderStatus status;
     private Integer itemCount;
+    private String paymentMethod;
+    private String transactionId;
     private String firstPhotoThumbnail;
     private LocalDateTime createdAt;
 }

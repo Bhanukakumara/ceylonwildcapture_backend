@@ -324,4 +324,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
        boolean hasBuyerPurchasedPhoto(@Param("buyerId") Long buyerId,
                      @Param("photoId") Long photoId,
                      @Param("status") OrderStatus status);
+
+    List<Order> findByCreatedAtBetweenAndStatus(LocalDateTime startDateTime, LocalDateTime endDateTime, OrderStatus orderStatus);
 }

@@ -2,8 +2,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.ser
 
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.dto.AuditEventResponse;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.dto.AuditSearchCriteria;
-// import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.enums.AuditType; // Removed unused import
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.exception.AuditQueryException;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.mapper.AuditMapper;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.repository.*;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.service.AuditQueryService;
@@ -36,7 +34,9 @@ public class AuditQueryServiceImpl implements AuditQueryService {
             // In a real production system, this would require a unified audit table or
             // ElasticSearch.
             // For now, we return empty or require a type.
-            throw new AuditQueryException("Audit Type is required for filtering.");
+            // For now, we return empty page instead of throwing exception to avoid 500
+            // error.
+            return Page.empty(pageable);
         }
 
         switch (criteria.getAuditType()) {

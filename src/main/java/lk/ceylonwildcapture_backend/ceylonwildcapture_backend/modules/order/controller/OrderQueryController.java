@@ -30,12 +30,18 @@ public class OrderQueryController {
     /**
      * Get all orders (admin only).
      *
+     * @param status   optional order status filter
      * @param pageable pagination parameters
      * @return page of orders
      */
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<OrderSummaryDto>> getAllOrders(Pageable pageable) {
+    public ResponseEntity<Page<OrderSummaryDto>> getAllOrders(
+            @RequestParam(required = false) OrderStatus status,
+            Pageable pageable) {
+        if (status != null) {
+            return ResponseEntity.ok(orderQueryService.getOrdersByStatusSummary(status, pageable));
+        }
         Page<OrderSummaryDto> orders = orderQueryService.getAllOrders(pageable);
         return ResponseEntity.ok(orders);
     }
@@ -43,7 +49,7 @@ public class OrderQueryController {
     /**
      * Get orders by status (admin only).
      *
-     * @param status order status
+     * @param status   order status
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -59,7 +65,7 @@ public class OrderQueryController {
     /**
      * Get orders by buyer (admin only).
      *
-     * @param buyerId buyer ID
+     * @param buyerId  buyer ID
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -76,7 +82,7 @@ public class OrderQueryController {
      * Get orders by photographer (admin only).
      *
      * @param photographerId photographer ID
-     * @param pageable pagination parameters
+     * @param pageable       pagination parameters
      * @return page of orders
      */
     @GetMapping("/photographer/{photographerId}")
@@ -91,7 +97,7 @@ public class OrderQueryController {
     /**
      * Get orders by photo (admin only).
      *
-     * @param photoId photo ID
+     * @param photoId  photo ID
      * @param pageable pagination parameters
      * @return page of orders
      */
@@ -108,8 +114,8 @@ public class OrderQueryController {
      * Get orders by date range (admin only).
      *
      * @param startDate start date
-     * @param endDate end date
-     * @param pageable pagination parameters
+     * @param endDate   end date
+     * @param pageable  pagination parameters
      * @return page of orders
      */
     @GetMapping("/date-range")

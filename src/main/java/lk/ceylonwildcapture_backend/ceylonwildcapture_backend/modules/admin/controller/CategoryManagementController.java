@@ -23,6 +23,29 @@ import java.util.List;
 public class CategoryManagementController {
 
     private final CategoryManagementService categoryManagementService;
+    private final com.cloudinary.Cloudinary cloudinary;
+
+    // Image Upload
+
+    @SuppressWarnings("unchecked")
+    @PostMapping("/upload-image")
+    public ResponseEntity<String> uploadImage(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            // Upload to Cloudinary
+            java.util.Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    com.cloudinary.utils.ObjectUtils.asMap(
+                            "folder", "categories",
+                            "resource_type", "image"));
+
+            // Get the URL
+            String imageUrl = (String) uploadResult.get("secure_url");
+            return ResponseEntity.ok(imageUrl);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to upload image: " + e.getMessage());
+        }
+    }
 
     // Category Management
 
@@ -62,7 +85,8 @@ public class CategoryManagementController {
             @RequestParam Long sourceCategoryId,
             @RequestParam Long targetCategoryId,
             @RequestAttribute("userId") Long adminId) {
-        Category mergedCategory = categoryManagementService.mergeCategories(sourceCategoryId, targetCategoryId, adminId);
+        Category mergedCategory = categoryManagementService.mergeCategories(sourceCategoryId, targetCategoryId,
+                adminId);
         return ResponseEntity.ok(mergedCategory);
     }
 

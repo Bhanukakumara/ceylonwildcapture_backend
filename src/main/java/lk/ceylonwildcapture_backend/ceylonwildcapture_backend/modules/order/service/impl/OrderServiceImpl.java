@@ -314,8 +314,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto updateStatus(Long orderId, @Valid UpdateOrderStatusRequestDto statusDto) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        log.info("Updating order {} status to {}", orderId, statusDto.getStatus());
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Update status
+        order.setStatus(statusDto.getStatus());
+
+        // Update payment information if provided
+        if (statusDto.getPaymentId() != null) {
+            order.setPaymentId(statusDto.getPaymentId());
+        }
+        if (statusDto.getTransactionId() != null) {
+            order.setTransactionId(statusDto.getTransactionId());
+        }
+
+        // Set completion timestamp if order is completed
+        if (statusDto.getStatus() == OrderStatus.COMPLETED && order.getCompletedAt() == null) {
+            order.setCompletedAt(LocalDateTime.now());
+        }
+
+        // Set cancellation timestamp if order is cancelled
+        if (statusDto.getStatus() == OrderStatus.CANCELLED && order.getCancelledAt() == null) {
+            order.setCancelledAt(LocalDateTime.now());
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order {} status updated successfully to {}", orderId, statusDto.getStatus());
+
+        return mapToResponseDto(savedOrder);
     }
 
     @Override
@@ -376,6 +406,8 @@ public class OrderServiceImpl implements OrderService {
                 .taxAmount(order.getTaxAmount())
                 .status(order.getStatus())
                 .paymentMethod(order.getPaymentMethod())
+                .paymentId(order.getPaymentId())
+                .transactionId(order.getTransactionId())
                 .billingInfo(mapToBillingInfoDto(order))
                 .createdAt(order.getCreatedAt())
                 .itemCount(order.getOrderItems().size())
@@ -396,7 +428,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderItemResponseDto mapToOrderItemResponseDto(OrderItem item) {
-        return OrderItemResponseDto.builder()
+        OrderItemResponseDto.OrderItemResponseDtoBuilder builder = OrderItemResponseDto.builder()
                 .id(item.getId())
                 .photoId(item.getPhoto().getId())
                 .photoTitle(item.getPhoto().getTitle())
@@ -406,8 +438,13 @@ public class OrderServiceImpl implements OrderService {
                         + item.getPhoto().getPhotographer().getLastName())
                 .licenseType(item.getLicenseType())
                 .price(item.getPrice())
-                .finalPrice(item.getFinalPrice())
-                .build();
+                .finalPrice(item.getFinalPrice());
+
+        if (item.getOrder().getStatus() == OrderStatus.COMPLETED) {
+            builder.photoOriginalUrl(item.getPhoto().getImageUrl());
+        }
+
+        return builder.build();
     }
 
     private OrderSummaryDto mapToSummaryDto(Order order) {
@@ -419,9 +456,13 @@ public class OrderServiceImpl implements OrderService {
         return OrderSummaryDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .buyerName(order.getBillingName())
+                .buyerEmail(order.getBillingEmail())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .itemCount(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
+                .paymentMethod(order.getPaymentMethod())
+                .transactionId(order.getTransactionId())
                 .firstPhotoThumbnail(firstPhotoThumbnail)
                 .createdAt(order.getCreatedAt())
                 .build();

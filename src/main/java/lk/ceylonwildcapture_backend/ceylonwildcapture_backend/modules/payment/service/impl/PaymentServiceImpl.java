@@ -14,6 +14,7 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payment.en
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payment.repository.PaymentRepository;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,257 +26,280 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
+        private final PaymentRepository paymentRepository;
+        private final OrderRepository orderRepository;
 
-    @Value("${stripe.secret-key}")
-    private String stripeSecretKey;
+        @Value("${stripe.secret-key}")
+        private String stripeSecretKey;
 
-    @Value("${stripe.return-url}")
-    private String stripeReturnUrl;
+        @Value("${stripe.return-url}")
+        private String stripeReturnUrl;
 
-    @Value("${stripe.cancel-url}")
-    private String stripeCancelUrl;
+        @Value("${stripe.cancel-url}")
+        private String stripeCancelUrl;
 
-    @Override
-    @Transactional
-    public PaymentIntentResponseDto createPaymentIntent(CreatePaymentIntentRequestDto requestDto, Long userId) {
-        Stripe.apiKey = stripeSecretKey;
+        @Override
+        @Transactional
+        public PaymentIntentResponseDto createPaymentIntent(CreatePaymentIntentRequestDto requestDto, Long userId) {
+                Stripe.apiKey = stripeSecretKey;
 
-        Order order = orderRepository.findById(requestDto.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                Order order = orderRepository.findById(requestDto.getOrderId())
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        try {
-            SessionCreateParams params = SessionCreateParams.builder()
-                    .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .setSuccessUrl(stripeReturnUrl + "?session_id={CHECKOUT_SESSION_ID}")
-                    .setCancelUrl(stripeCancelUrl)
-                    .setCustomerEmail(order.getBillingEmail())
-                    .setClientReferenceId(order.getId().toString())
-                    .addAllLineItem(order.getOrderItems().stream()
-                            .map(item -> SessionCreateParams.LineItem.builder()
-                                    .setQuantity(1L)
-                                    .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                                            .setCurrency(requestDto.getCurrency() != null
-                                                    ? requestDto.getCurrency().toLowerCase()
-                                                    : "usd")
-                                            .setUnitAmount(item.getPrice().multiply(new BigDecimal(100)).longValue())
-                                            .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                    .setName(item.getPhoto().getTitle())
-                                                    .build())
-                                            .build())
-                                    .build())
-                            .collect(Collectors.toList()))
-                    .build();
+                try {
+                        SessionCreateParams params = SessionCreateParams.builder()
+                                        .setMode(SessionCreateParams.Mode.PAYMENT)
+                                        .setSuccessUrl(stripeReturnUrl + "?session_id={CHECKOUT_SESSION_ID}")
+                                        .setCancelUrl(stripeCancelUrl)
+                                        .setCustomerEmail(order.getBillingEmail())
+                                        .setClientReferenceId(order.getId().toString())
+                                        .addAllLineItem(order.getOrderItems().stream()
+                                                        .map(item -> SessionCreateParams.LineItem.builder()
+                                                                        .setQuantity(1L)
+                                                                        .setPriceData(SessionCreateParams.LineItem.PriceData
+                                                                                        .builder()
+                                                                                        .setCurrency(requestDto
+                                                                                                        .getCurrency() != null
+                                                                                                                        ? requestDto.getCurrency()
+                                                                                                                                        .toLowerCase()
+                                                                                                                        : "usd")
+                                                                                        .setUnitAmount(item.getPrice()
+                                                                                                        .multiply(new BigDecimal(
+                                                                                                                        100))
+                                                                                                        .longValue())
+                                                                                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData
+                                                                                                        .builder()
+                                                                                                        .setName(item.getPhoto()
+                                                                                                                        .getTitle())
+                                                                                                        .build())
+                                                                                        .build())
+                                                                        .build())
+                                                        .collect(Collectors.toList()))
+                                        .build();
 
-            Session session = Session.create(params);
+                        Session session = Session.create(params);
 
-            Payment payment = Payment.builder()
-                    .order(order)
-                    .paymentMethod("CARD")
-                    .paymentProvider(PaymentProvider.STRIPE.name())
-                    .paymentId(session.getId())
-                    .amount(order.getTotalAmount())
-                    .currency(requestDto.getCurrency() != null ? requestDto.getCurrency() : "USD")
-                    .status(PaymentStatus.PENDING.name())
-                    .build();
+                        Payment payment = Payment.builder()
+                                        .order(order)
+                                        .paymentMethod("CARD")
+                                        .paymentProvider(PaymentProvider.STRIPE.name())
+                                        .paymentId(session.getId())
+                                        .amount(order.getTotalAmount())
+                                        .currency(requestDto.getCurrency() != null ? requestDto.getCurrency() : "USD")
+                                        .status(PaymentStatus.PENDING.name())
+                                        .build();
 
-            paymentRepository.save(payment);
+                        paymentRepository.save(payment);
 
-            return PaymentIntentResponseDto.builder()
-                    .paymentId(payment.getId())
-                    .providerPaymentId(session.getId())
-                    .provider(PaymentProvider.STRIPE)
-                    .amount(payment.getAmount())
-                    .currency(payment.getCurrency())
-                    .status(PaymentStatus.PENDING)
-                    .redirectUrl(session.getUrl())
-                    .orderId(order.getId())
-                    .orderNumber(order.getOrderNumber())
-                    .build();
+                        return PaymentIntentResponseDto.builder()
+                                        .paymentId(payment.getId())
+                                        .providerPaymentId(session.getId())
+                                        .provider(PaymentProvider.STRIPE)
+                                        .amount(payment.getAmount())
+                                        .currency(payment.getCurrency())
+                                        .status(PaymentStatus.PENDING)
+                                        .redirectUrl(session.getUrl())
+                                        .orderId(order.getId())
+                                        .orderNumber(order.getOrderNumber())
+                                        .build();
 
-        } catch (StripeException e) {
-            throw new RuntimeException("Stripe error: " + e.getMessage());
+                } catch (StripeException e) {
+                        throw new RuntimeException("Stripe error: " + e.getMessage());
+                }
         }
-    }
 
-    @Override
-    @Transactional
-    public Payment attachOrderToPayment(Long paymentId, Long orderId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        payment.setOrder(order);
-        return paymentRepository.save(payment);
-    }
+        @Override
+        @Transactional
+        public Payment attachOrderToPayment(Long paymentId, Long orderId) {
+                Payment payment = paymentRepository.findById(paymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+                payment.setOrder(order);
+                return paymentRepository.save(payment);
+        }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto markPaymentSuccess(String paymentId, String transactionId) {
-        Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        @Override
+        @Transactional
+        public PaymentResponseDto markPaymentSuccess(String paymentId, String transactionId) {
+                log.info("Marking payment as success: paymentId={}, transactionId={}", paymentId, transactionId);
+                Payment payment = paymentRepository.findByPaymentId(paymentId)
+                                .orElseThrow(() -> {
+                                        log.error("Payment NOT FOUND in database for paymentId: {}", paymentId);
+                                        return new RuntimeException("Payment not found");
+                                });
 
-        payment.setStatus(PaymentStatus.SUCCESS.name());
-        payment.setTransactionId(transactionId);
-        payment.setPaidAt(LocalDateTime.now());
-        paymentRepository.save(payment);
+                log.info("Found payment ID: {}. Current status: {}", payment.getId(), payment.getStatus());
+                payment.setStatus(PaymentStatus.SUCCESS.name());
+                payment.setTransactionId(transactionId);
+                payment.setPaidAt(LocalDateTime.now());
+                paymentRepository.save(payment);
+                log.info("Saved updated payment. New status: {}", payment.getStatus());
 
-        Order order = payment.getOrder();
-        order.setStatus(OrderStatus.COMPLETED);
-        order.setPaymentId(paymentId);
-        order.setTransactionId(transactionId);
-        order.setCompletedAt(LocalDateTime.now());
-        orderRepository.save(order);
+                Order order = payment.getOrder();
+                if (order == null) {
+                        log.error("Payment ID {} has NO ASSOCIATED ORDER!", payment.getId());
+                        throw new RuntimeException("Order not found for payment");
+                }
+                log.info("Found associated order ID: {}. Current status: {}", order.getId(), order.getStatus());
+                order.setStatus(OrderStatus.COMPLETED);
+                order.setPaymentId(paymentId);
+                order.setTransactionId(transactionId);
+                order.setCompletedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                log.info("Updated order status to COMPLETED for order ID: {}", order.getId());
 
-        return mapToResponseDto(payment);
-    }
+                return mapToResponseDto(payment);
+        }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto markPaymentFailed(String paymentId, String errorMessage) {
-        Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        @Override
+        @Transactional
+        public PaymentResponseDto markPaymentFailed(String paymentId, String errorMessage) {
+                Payment payment = paymentRepository.findByPaymentId(paymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
 
-        payment.setStatus(PaymentStatus.FAILED.name());
-        payment.setErrorMessage(errorMessage);
-        paymentRepository.save(payment);
+                payment.setStatus(PaymentStatus.FAILED.name());
+                payment.setErrorMessage(errorMessage);
+                paymentRepository.save(payment);
 
-        Order order = payment.getOrder();
-        order.setStatus(OrderStatus.CANCELLED);
-        orderRepository.save(order);
+                Order order = payment.getOrder();
+                order.setStatus(OrderStatus.CANCELLED);
+                orderRepository.save(order);
 
-        return mapToResponseDto(payment);
-    }
+                return mapToResponseDto(payment);
+        }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto updatePaymentStatus(String paymentId, PaymentStatus status) {
-        Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setStatus(status.name());
-        return mapToResponseDto(paymentRepository.save(payment));
-    }
+        @Override
+        @Transactional
+        public PaymentResponseDto updatePaymentStatus(String paymentId, PaymentStatus status) {
+                Payment payment = paymentRepository.findByPaymentId(paymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                payment.setStatus(status.name());
+                return mapToResponseDto(paymentRepository.save(payment));
+        }
 
-    @Override
-    public PaymentResponseDto getPaymentById(Long paymentId, Long userId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        return mapToResponseDto(payment);
-    }
+        @Override
+        public PaymentResponseDto getPaymentById(Long paymentId, Long userId) {
+                Payment payment = paymentRepository.findById(paymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                return mapToResponseDto(payment);
+        }
 
-    @Override
-    public PaymentResponseDto getPaymentByProviderPaymentId(String providerPaymentId) {
-        Payment payment = paymentRepository.findByPaymentId(providerPaymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        return mapToResponseDto(payment);
-    }
+        @Override
+        public PaymentResponseDto getPaymentByProviderPaymentId(String providerPaymentId) {
+                Payment payment = paymentRepository.findByPaymentId(providerPaymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                return mapToResponseDto(payment);
+        }
 
-    @Override
-    public PaymentResponseDto getPaymentByOrderId(Long orderId) {
-        Payment payment = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        return mapToResponseDto(payment);
-    }
+        @Override
+        public PaymentResponseDto getPaymentByOrderId(Long orderId) {
+                Payment payment = paymentRepository.findByOrderId(orderId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                return mapToResponseDto(payment);
+        }
 
-    @Override
-    public Page<PaymentResponseDto> getUserPayments(Long userId, Pageable pageable) {
-        return paymentRepository.findByBuyerId(userId, pageable).map(this::mapToResponseDto);
-    }
+        @Override
+        public Page<PaymentResponseDto> getUserPayments(Long userId, Pageable pageable) {
+                return paymentRepository.findByBuyerId(userId, pageable).map(this::mapToResponseDto);
+        }
 
-    @Override
-    public Page<PaymentResponseDto> getPaymentsByStatus(PaymentStatus status, Pageable pageable) {
-        return paymentRepository.findByStatus(status.name(), pageable).map(this::mapToResponseDto);
-    }
+        @Override
+        public Page<PaymentResponseDto> getPaymentsByStatus(PaymentStatus status, Pageable pageable) {
+                return paymentRepository.findByStatus(status.name(), pageable).map(this::mapToResponseDto);
+        }
 
-    @Override
-    public Page<PaymentResponseDto> getPaymentsByDateRange(LocalDateTime startDate, LocalDateTime endDate,
-            Pageable pageable) {
-        return paymentRepository.findByCreatedAtBetween(startDate, endDate, pageable).map(this::mapToResponseDto);
-    }
+        @Override
+        public Page<PaymentResponseDto> getPaymentsByDateRange(LocalDateTime startDate, LocalDateTime endDate,
+                        Pageable pageable) {
+                return paymentRepository.findByCreatedAtBetween(startDate, endDate, pageable)
+                                .map(this::mapToResponseDto);
+        }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto processRefund(RefundRequestDto refundRequest) {
-        Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setStatus(PaymentStatus.REFUNDED.name());
-        payment.setRefundAmount(refundRequest.getAmount());
-        payment.setRefundReason(refundRequest.getReason());
-        payment.setRefundedAt(LocalDateTime.now());
+        @Override
+        @Transactional
+        public PaymentResponseDto processRefund(RefundRequestDto refundRequest) {
+                Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                payment.setStatus(PaymentStatus.REFUNDED.name());
+                payment.setRefundAmount(refundRequest.getAmount());
+                payment.setRefundReason(refundRequest.getReason());
+                payment.setRefundedAt(LocalDateTime.now());
 
-        Order order = payment.getOrder();
-        order.setStatus(OrderStatus.REFUNDED);
-        order.setRefundedAt(LocalDateTime.now());
-        orderRepository.save(order);
+                Order order = payment.getOrder();
+                order.setStatus(OrderStatus.REFUNDED);
+                order.setRefundedAt(LocalDateTime.now());
+                orderRepository.save(order);
 
-        return mapToResponseDto(paymentRepository.save(payment));
-    }
+                return mapToResponseDto(paymentRepository.save(payment));
+        }
 
-    @Override
-    @Transactional
-    public PaymentResponseDto cancelPayment(Long paymentId, Long userId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setStatus(PaymentStatus.CANCELLED.name());
+        @Override
+        @Transactional
+        public PaymentResponseDto cancelPayment(Long paymentId, Long userId) {
+                Payment payment = paymentRepository.findById(paymentId)
+                                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                payment.setStatus(PaymentStatus.CANCELLED.name());
 
-        Order order = payment.getOrder();
-        order.setStatus(OrderStatus.CANCELLED);
-        order.setCancelledAt(LocalDateTime.now());
-        orderRepository.save(order);
+                Order order = payment.getOrder();
+                order.setStatus(OrderStatus.CANCELLED);
+                order.setCancelledAt(LocalDateTime.now());
+                orderRepository.save(order);
 
-        return mapToResponseDto(paymentRepository.save(payment));
-    }
+                return mapToResponseDto(paymentRepository.save(payment));
+        }
 
-    @Override
-    public Payment getPaymentEntity(Long paymentId) {
-        return paymentRepository.findById(paymentId).orElse(null);
-    }
+        @Override
+        public Payment getPaymentEntity(Long paymentId) {
+                return paymentRepository.findById(paymentId).orElse(null);
+        }
 
-    @Override
-    public Optional<Payment> findByProviderPaymentId(String providerPaymentId) {
-        return paymentRepository.findByPaymentId(providerPaymentId);
-    }
+        @Override
+        public Optional<Payment> findByProviderPaymentId(String providerPaymentId) {
+                return paymentRepository.findByPaymentId(providerPaymentId);
+        }
 
-    @Override
-    public Page<PaymentResponseDto> searchPayments(String searchTerm, Pageable pageable) {
-        return paymentRepository.searchPayments(searchTerm, pageable).map(this::mapToResponseDto);
-    }
+        @Override
+        public Page<PaymentResponseDto> searchPayments(String searchTerm, Pageable pageable) {
+                return paymentRepository.searchPayments(searchTerm, pageable).map(this::mapToResponseDto);
+        }
 
-    @Override
-    public long countUserPayments(Long userId) {
-        return paymentRepository.countByBuyerId(userId);
-    }
+        @Override
+        public long countUserPayments(Long userId) {
+                return paymentRepository.countByBuyerId(userId);
+        }
 
-    private PaymentResponseDto mapToResponseDto(Payment payment) {
-        return PaymentResponseDto.builder()
-                .id(payment.getId())
-                .orderId(payment.getOrder().getId())
-                .orderNumber(payment.getOrder().getOrderNumber())
-                .paymentMethod(payment.getPaymentMethod())
-                .paymentProvider(
-                        payment.getPaymentProvider() != null ? PaymentProvider.valueOf(payment.getPaymentProvider())
-                                : null)
-                .transactionId(payment.getTransactionId())
-                .paymentId(payment.getPaymentId())
-                .amount(payment.getAmount())
-                .fee(payment.getFee())
-                .netAmount(payment.getNetAmount())
-                .currency(payment.getCurrency())
-                .status(PaymentStatus.valueOf(payment.getStatus()))
-                .payerEmail(payment.getPayerEmail())
-                .payerName(payment.getPayerName())
-                .cardLastFour(payment.getCardLastFour())
-                .cardBrand(payment.getCardBrand())
-                .errorMessage(payment.getErrorMessage())
-                .paidAt(payment.getPaidAt())
-                .refundedAt(payment.getRefundedAt())
-                .createdAt(payment.getCreatedAt())
-                .updatedAt(payment.getUpdatedAt())
-                .build();
-    }
+        private PaymentResponseDto mapToResponseDto(Payment payment) {
+                return PaymentResponseDto.builder()
+                                .id(payment.getId())
+                                .orderId(payment.getOrder().getId())
+                                .orderNumber(payment.getOrder().getOrderNumber())
+                                .paymentMethod(payment.getPaymentMethod())
+                                .paymentProvider(
+                                                payment.getPaymentProvider() != null
+                                                                ? PaymentProvider.valueOf(payment.getPaymentProvider())
+                                                                : null)
+                                .transactionId(payment.getTransactionId())
+                                .paymentId(payment.getPaymentId())
+                                .amount(payment.getAmount())
+                                .fee(payment.getFee())
+                                .netAmount(payment.getNetAmount())
+                                .currency(payment.getCurrency())
+                                .status(PaymentStatus.valueOf(payment.getStatus()))
+                                .payerEmail(payment.getPayerEmail())
+                                .payerName(payment.getPayerName())
+                                .cardLastFour(payment.getCardLastFour())
+                                .cardBrand(payment.getCardBrand())
+                                .errorMessage(payment.getErrorMessage())
+                                .paidAt(payment.getPaidAt())
+                                .refundedAt(payment.getRefundedAt())
+                                .createdAt(payment.getCreatedAt())
+                                .updatedAt(payment.getUpdatedAt())
+                                .build();
+        }
 }

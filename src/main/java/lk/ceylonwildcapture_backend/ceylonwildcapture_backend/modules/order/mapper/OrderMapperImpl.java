@@ -7,7 +7,6 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.enti
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-
 /**
  * Implementation of OrderMapper interface.
  */
@@ -35,8 +34,7 @@ public class OrderMapperImpl implements OrderMapper {
                 .paymentMethod(order.getPaymentMethod())
                 .paymentId(order.getPaymentId())
                 .transactionId(order.getTransactionId())
-                .billingInfo(order.getBillingName() != null ? 
-                    BillingInfoDto.builder()
+                .billingInfo(order.getBillingName() != null ? BillingInfoDto.builder()
                         .billingName(order.getBillingName())
                         .billingEmail(order.getBillingEmail())
                         .billingAddress(order.getBillingAddress())
@@ -65,9 +63,13 @@ public class OrderMapperImpl implements OrderMapper {
         return OrderSummaryDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .buyerName(order.getBillingName())
+                .buyerEmail(order.getBillingEmail())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .itemCount(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
+                .paymentMethod(order.getPaymentMethod())
+                .transactionId(order.getTransactionId())
                 .createdAt(order.getCreatedAt())
                 .build();
     }

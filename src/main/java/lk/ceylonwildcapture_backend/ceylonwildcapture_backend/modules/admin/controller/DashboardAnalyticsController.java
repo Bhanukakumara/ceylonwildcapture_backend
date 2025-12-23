@@ -24,9 +24,14 @@ public class DashboardAnalyticsController {
 
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardAnalyticsDto> getDashboardAnalytics(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        DashboardAnalyticsDto analytics = analyticsService.getDashboardAnalytics(startDate, endDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        DashboardAnalyticsDto analytics;
+        if (startDate != null && endDate != null) {
+            analytics = analyticsService.getDashboardAnalytics(startDate, endDate);
+        } else {
+            analytics = analyticsService.getDashboardAnalytics();
+        }
         return ResponseEntity.ok(analytics);
     }
 
@@ -88,5 +93,21 @@ public class DashboardAnalyticsController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         Map<String, Object> performance = analyticsService.getCategoryPerformance(startDate, endDate);
         return ResponseEntity.ok(performance);
+    }
+
+    @GetMapping("/category-performance/top")
+    public ResponseEntity<java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.CategoryPerformanceDto>> getTopCategoryPerformance(
+            @RequestParam(defaultValue = "5") int limit) {
+        java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.CategoryPerformanceDto> performance = analyticsService
+                .getCategoryPerformance(limit);
+        return ResponseEntity.ok(performance);
+    }
+
+    @GetMapping("/recent-activity")
+    public ResponseEntity<java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.RecentActivityDto>> getRecentActivity(
+            @RequestParam(defaultValue = "10") int limit) {
+        java.util.List<lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.dto.RecentActivityDto> activities = analyticsService
+                .getRecentActivity(limit);
+        return ResponseEntity.ok(activities);
     }
 }
