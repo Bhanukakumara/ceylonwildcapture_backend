@@ -258,4 +258,30 @@ public interface UserService {
      * @throws IllegalArgumentException if user not found
      */
     UserResponseDto assignRole(Long userId, UserRole role);
+
+    /**
+     * Create email verification token for user.
+     *
+     * @param userId the user ID
+     * @return the verification token string
+     * @throws IllegalArgumentException if user not found
+     */
+    String createVerificationToken(Long userId);
+
+    /**
+     * Verify email using verification token.
+     *
+     * @param token the verification token
+     * @return the verified user response DTO
+     * @throws IllegalArgumentException if token invalid or expired
+     */
+    UserResponseDto verifyEmailByToken(String token);
+
+    /**
+     * Resend verification email to user.
+     *
+     * @param email the user email
+     * @throws IllegalArgumentException if user not found or already verified
+     */
+    void resendVerificationEmail(String email);
 }

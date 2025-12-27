@@ -34,6 +34,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.util.EmailService emailService;
+    private final lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.EmailVerificationTokenRepository tokenRepository;
 
     @Override
     public UserResponseDto createUser(UserCreateDto userCreateDto) {
@@ -64,6 +66,19 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         log.info("User created successfully with ID: {}", savedUser.getId());
+        
+        // Send verification email for non-admin users who aren't pre-verified
+        if (!savedUser.getEmailVerified() && savedUser.getRole() != UserRole.ADMIN) {
+            try {
+                String token = createVerificationToken(savedUser.getId());
+                emailService.sendEmailVerification(savedUser, token);
+                log.info("Verification email sent to: {}", savedUser.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send verification email to: {}", savedUser.getEmail(), e);
+                // Don't fail user creation if email fails
+            }
+        }
+        
         return UserResponseDto.fromEntity(savedUser);
     }
 
@@ -495,5 +510,76 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.save(user);
         log.info("Role assigned successfully to user with ID: {}", userId);
         return UserResponseDto.fromEntity(updatedUser);
+    }
+
+    @Override
+    public String createVerificationToken(Long userId) {
+        log.info("Creating verification token for user ID: {}", userId);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // Delete any existing tokens for this user
+        tokenRepository.deleteByUser(user);
+        
+        // Create new token
+        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken token = 
+            lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken.builder()
+                .token(lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken.generateTokenString())
+                .user(user)
+                .expiryDate(lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken.calculateExpiryDate())
+                .build();
+        
+        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken savedToken = tokenRepository.save(token);
+        log.info("Verification token created for user ID: {}", userId);
+        return savedToken.getToken();
+    }
+
+    @Override
+    public UserResponseDto verifyEmailByToken(String token) {
+        log.info("Verifying email with token");
+        
+        lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.EmailVerificationToken verificationToken = 
+            tokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid verification token"));
+        
+        if (verificationToken.isExpired()) {
+            log.warn("Verification token has expired");
+            throw new IllegalArgumentException("Verification token has expired");
+        }
+        
+        if (verificationToken.getUsed()) {
+            log.warn("Verification token has already been used");
+            throw new IllegalArgumentException("Verification token has already been used");
+        }
+        
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        User verifiedUser = userRepository.save(user);
+        
+        // Mark token as used
+        verificationToken.setUsed(true);
+        tokenRepository.save(verificationToken);
+        
+        log.info("Email verified successfully for user ID: {}", user.getId());
+        return UserResponseDto.fromEntity(verifiedUser);
+    }
+
+    @Override
+    public void resendVerificationEmail(String email) {
+        log.info("Resending verification email to: {}", email);
+        
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("email", email));
+        
+        if (user.getEmailVerified()) {
+            throw new IllegalArgumentException("Email is already verified");
+        }
+        
+        // Create new token and send email
+        String token = createVerificationToken(user.getId());
+        emailService.sendEmailVerification(user, token);
+        
+        log.info("Verification email resent to: {}", email);
     }
 }

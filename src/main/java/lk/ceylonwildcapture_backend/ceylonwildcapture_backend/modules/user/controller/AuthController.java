@@ -27,6 +27,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private final lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.service.UserService userService;
 
     /**
      * Authenticate user and generate JWT tokens.
@@ -99,6 +100,77 @@ public class AuthController {
         } else {
             log.debug("Invalid credentials for user: {}", loginRequest.getUsernameOrEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    /**
+     * Verify email address using verification token.
+     *
+     * @param token the verification token from email link
+     * @return success message
+     */
+    @GetMapping("/verify-email")
+    @Operation(summary = "Verify email", description = "Verify user email address using token from email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired token")
+    })
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestParam String token) {
+        log.info("Email verification request received");
+
+        try {
+            UserResponseDto user = userService.verifyEmailByToken(token);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "Email verified successfully! You can now log in.",
+                "user", user
+            );
+            
+            log.info("Email verified successfully for user: {}", user.getEmail());
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("Email verification failed: {}", e.getMessage());
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", e.getMessage()
+            );
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Resend verification email.
+     *
+     * @param email the user email
+     * @return success message
+     */
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend verification email", description = "Resend email verification link to user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification email sent"),
+            @ApiResponse(responseCode = "400", description = "Email already verified or not found")
+    })
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestParam String email) {
+        log.info("Resend verification request for email: {}", email);
+
+        try {
+            userService.resendVerificationEmail(email);
+            
+            Map<String, String> response = Map.of(
+                "success", "true",
+                "message", "Verification email sent successfully. Please check your inbox."
+            );
+            
+            log.info("Verification email resent to: {}", email);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("Resend verification failed: {}", e.getMessage());
+            Map<String, String> response = Map.of(
+                "success", "false",
+                "message", e.getMessage()
+            );
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

@@ -19,4 +19,6 @@ stripe:
   return-url: ${STRIPE_RETURN_URL:http://localhost:5173/orders}
   cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/checkout}
 
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
