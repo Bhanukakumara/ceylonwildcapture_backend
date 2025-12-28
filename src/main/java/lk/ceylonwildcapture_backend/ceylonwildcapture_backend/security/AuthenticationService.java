@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,6 +46,11 @@ public class AuthenticationService {
         log.debug("Attempting authentication for user: {}", usernameOrEmail);
 
         try {
+            // Validate credentials (this will check password and status like enabled/disabled)
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(usernameOrEmail, loginRequest.getPassword())
+            );
+
             log.debug("Authentication successful for user: {}", usernameOrEmail);
 
             // Get user details
@@ -68,9 +74,12 @@ public class AuthenticationService {
                     .user(createUserResponse(user))
                     .build();
 
+        } catch (DisabledException e) {
+            log.warn("Login attempted for unverified user: {}", usernameOrEmail);
+            throw new DisabledException("Your email address is not verified. Please verify your email before logging in.");
         } catch (AuthenticationException e) {
-            log.warn("Authentication failed for user: {}", usernameOrEmail);
-            throw new BadCredentialsException("Invalid username or password", e);
+            log.warn("Authentication failed for user: {}: {}", usernameOrEmail, e.getMessage());
+            throw new BadCredentialsException("Invalid username or password");
         }
     }
 

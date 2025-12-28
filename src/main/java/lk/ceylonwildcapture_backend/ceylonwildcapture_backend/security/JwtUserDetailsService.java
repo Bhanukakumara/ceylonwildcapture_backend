@@ -64,6 +64,10 @@ public class JwtUserDetailsService implements UserDetailsService {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
+                user.getEmailVerified(), // account is enabled only if email is verified
+                true, // accountNonExpired
+                true, // credentialsNonExpired
+                true, // accountNonLocked
                 Collections.singletonList(authority));
     }
 

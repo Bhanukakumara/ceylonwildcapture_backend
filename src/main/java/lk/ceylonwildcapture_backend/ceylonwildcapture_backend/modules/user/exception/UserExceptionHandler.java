@@ -216,6 +216,25 @@ public class UserExceptionHandler {
     }
 
     /**
+     * Handle DisabledException (unverified email or disabled account)
+     */
+    @ExceptionHandler(org.springframework.security.authentication.DisabledException.class)
+    public ResponseEntity<ErrorResponseDto> handleDisabledException(
+            org.springframework.security.authentication.DisabledException ex, WebRequest request) {
+        log.error("Disabled account: {}", ex.getMessage());
+
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error(UNAUTHORIZED)
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace(URI_PREFIX, ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
      * Handle Spring Security BadCredentialsException
      */
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
