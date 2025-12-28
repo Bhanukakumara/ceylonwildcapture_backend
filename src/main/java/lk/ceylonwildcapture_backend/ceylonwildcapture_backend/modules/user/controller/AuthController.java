@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.*;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.security.AuthenticationService;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.GoogleLoginDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,28 @@ public class AuthController {
         AuthResponseDto authResponse = authenticationService.authenticate(loginRequest);
 
         log.info("User logged in successfully: {}", loginRequest.getUsernameOrEmail());
+        return ResponseEntity.ok(authResponse);
+    }
+
+    /**
+     * Authenticate user with Google.
+     *
+     * @param googleLoginDto Google login credentials
+     * @return authentication response with tokens
+     */
+    @PostMapping("/google")
+    @Operation(summary = "Google login", description = "Authenticate user via Google OAuth and return JWT tokens")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid Google token"),
+            @ApiResponse(responseCode = "400", description = "Bad request")
+    })
+    public ResponseEntity<AuthResponseDto> googleLogin(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
+        log.info("Google login attempt");
+
+        AuthResponseDto authResponse = authenticationService.authenticateWithGoogle(googleLoginDto);
+
+        log.info("User logged in successfully via Google");
         return ResponseEntity.ok(authResponse);
     }
 

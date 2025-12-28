@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.AuthProvider;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.UserRole;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.entity.DownloadAudit;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.entity.ModerationRecord;
@@ -44,11 +45,18 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @NotBlank(message = "Password is required")
     @Size(min = 8)
-    @Column(nullable = false)
+    @Column(name = "password")
     @JsonIgnore
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @NotBlank(message = "First name is required")
     @Size(max = 50)

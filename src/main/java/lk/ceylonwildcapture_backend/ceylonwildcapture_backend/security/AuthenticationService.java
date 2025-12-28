@@ -2,8 +2,13 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.security;
 
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.GoogleLoginDto;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.AuthProvider;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.UserRole;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.UserLoginDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.dto.AuthResponseDto;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,6 +36,7 @@ public class AuthenticationService {
     private final JwtUserDetailsService userDetailsService;
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
+    private final GoogleAuthService googleAuthService;
 
     /**
      * Authenticate user and generate JWT tokens.
@@ -142,6 +148,109 @@ public class AuthenticationService {
                 .isActive(user.getIsActive())
                 .emailVerified(user.getEmailVerified())
                 .build();
+    }
+
+    /**
+     * Authenticate user with Google.
+     *
+     * @param googleLoginDto Google login credentials
+     * @return authentication response with tokens
+     */
+    @Transactional
+    public AuthResponseDto authenticateWithGoogle(GoogleLoginDto googleLoginDto) {
+        try {
+            GoogleIdToken.Payload payload = googleAuthService.verifyToken(googleLoginDto.getIdToken());
+            String email = payload.getEmail();
+            String googleId = payload.getSubject();
+            String firstName = (String) payload.get("given_name");
+            String lastName = (String) payload.get("family_name");
+            String pictureUrl = (String) payload.get("picture");
+
+            log.info("Google authentication attempt for email: {}", email);
+
+            // 1. Try to find by googleId
+            Optional<User> userOptional = userRepository.findByGoogleId(googleId);
+
+            // 2. If not found, try to find by email
+            if (userOptional.isEmpty()) {
+                userOptional = userRepository.findByEmail(email);
+                if (userOptional.isPresent()) {
+                    // Link existing user to Google
+                    User user = userOptional.get();
+                    user.setGoogleId(googleId);
+                    user.setAuthProvider(AuthProvider.GOOGLE);
+                    if (user.getProfileImageUrl() == null) {
+                        user.setProfileImageUrl(pictureUrl);
+                    }
+                    userRepository.save(user);
+                    log.info("Linked existing user {} to Google account", email);
+                }
+            }
+
+            // 3. If still not found, create new user
+            User user;
+            if (userOptional.isEmpty()) {
+                user = User.builder()
+                        .email(email)
+                        .username(generateUniqueUsername(email))
+                        .firstName(firstName != null ? firstName : "Google")
+                        .lastName(lastName != null ? lastName : "User")
+                        .role(googleLoginDto.getRole() != null ? googleLoginDto.getRole() : UserRole.BUYER)
+                        .authProvider(AuthProvider.GOOGLE)
+                        .googleId(googleId)
+                        .profileImageUrl(pictureUrl)
+                        .emailVerified(true) // Google emails are already verified
+                        .isActive(true)
+                        .build();
+                user = userRepository.save(user);
+                log.info("Created new user via Google signup: {}", email);
+            } else {
+                user = userOptional.get();
+                // Ensure email verified if linked
+                if (!user.getEmailVerified()) {
+                    user.setEmailVerified(true);
+                    userRepository.save(user);
+                }
+            }
+
+            // Generate tokens
+            String accessToken = jwtTokenUtil.generateAccessToken(user.getUsername(), user.getRole());
+            String refreshToken = jwtTokenUtil.generateRefreshToken(user.getUsername());
+
+            // Update last login
+            user.setLastLogin(java.time.LocalDateTime.now());
+            userRepository.save(user);
+
+            return AuthResponseDto.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtTokenUtil.getJwtExpiration() / 1000)
+                    .user(createUserResponse(user))
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Google authentication failed", e);
+            throw new BadCredentialsException("Google authentication failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate a unique username based on the email.
+     *
+     * @param email user email
+     * @return a unique username
+     */
+    private String generateUniqueUsername(String email) {
+        String base = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+        if (base.length() < 3) base = base + "user";
+        
+        String username = base;
+        int count = 1;
+        while (userRepository.existsByUsername(username)) {
+            username = base + count++;
+        }
+        return username;
     }
 
     /**
