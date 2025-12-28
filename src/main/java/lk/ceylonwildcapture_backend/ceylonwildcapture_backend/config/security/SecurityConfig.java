@@ -69,13 +69,14 @@ public class SecurityConfig {
                                                 .permitAll() // Webhook alias (Singular)
 
                                                 // Admin endpoints
-                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
 
                                                 // Photographer endpoints
-                                                .requestMatchers("/api/photographer/**").hasRole("PHOTOGRAPHER")
+                                                .requestMatchers("/api/photographer/**", "/api/v1/photographer/**")
+                                                                .hasRole("PHOTOGRAPHER")
 
                                                 // Buyer endpoints
-                                                .requestMatchers("/api/buyer/**").hasRole("BUYER")
+                                                .requestMatchers("/api/buyer/**", "/api/v1/buyer/**").hasRole("BUYER")
 
                                                 // All other endpoints require authentication
                                                 .anyRequest().authenticated())
