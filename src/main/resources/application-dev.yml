@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/ceylon_wild_capture?createDatabaseIfNotExist=true
-    username: root
-    password: 1234
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:ceylon_wild_capture}?createDatabaseIfNotExist=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:1234}
 
   jpa:
     hibernate:

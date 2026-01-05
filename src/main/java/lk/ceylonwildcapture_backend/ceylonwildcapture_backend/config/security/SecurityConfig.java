@@ -106,12 +106,8 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                // Allow frontend origin
-                configuration.setAllowedOrigins(Arrays.asList(
-                                "http://localhost:5173",
-                                "http://localhost:3000",
-                                "http://127.0.0.1:5173",
-                                "http://127.0.0.1:3000"));
+                // Allow all origins
+                configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 
                 // Allow all HTTP methods
                 configuration.setAllowedMethods(Arrays.asList(
