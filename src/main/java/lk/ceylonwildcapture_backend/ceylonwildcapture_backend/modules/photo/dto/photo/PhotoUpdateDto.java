@@ -30,17 +30,6 @@ public class PhotoUpdateDto {
     @Digits(integer = 10, fraction = 2, message = "Base price must have at most 10 integer digits and 2 decimal places")
     private BigDecimal basePrice;
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "Commercial price must be greater than 0")
-    @Digits(integer = 10, fraction = 2, message = "Commercial price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal commercialPrice;
-
-    @DecimalMin(value = "0.0", inclusive = false, message = "Editorial price must be greater than 0")
-    @Digits(integer = 10, fraction = 2, message = "Editorial price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal editorialPrice;
-
-    @DecimalMin(value = "0.0", inclusive = false, message = "Extended price must be greater than 0")
-    @Digits(integer = 10, fraction = 2, message = "Extended price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal extendedPrice;
 
     @Size(max = 200, message = "Location must not exceed 200 characters")
     private String location;
@@ -52,4 +41,25 @@ public class PhotoUpdateDto {
     private Boolean isActive;
 
     private Boolean isFeatured;
+
+    // EXIF Data fields
+    @Size(max = 200, message = "Camera model must not exceed 200 characters")
+    private String cameraModel;
+
+    @Size(max = 200, message = "Lens must not exceed 200 characters")
+    private String lens;
+
+    @Size(max = 50, message = "Focal length must not exceed 50 characters")
+    private String focalLength;
+
+    @Size(max = 50, message = "Aperture must not exceed 50 characters")
+    private String aperture;
+
+    @Size(max = 50, message = "Shutter speed must not exceed 50 characters")
+    private String shutterSpeed;
+
+    @Size(max = 50, message = "ISO must not exceed 50 characters")
+    private String iso;
+
+    private String captureDate;
 }

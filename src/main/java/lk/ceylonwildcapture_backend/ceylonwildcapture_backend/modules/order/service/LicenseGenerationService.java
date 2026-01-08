@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.License;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.OrderItem;
 
@@ -36,13 +35,7 @@ public interface LicenseGenerationService {
      */
     String generateLicenseKeyWithPrefix(String prefix);
 
-    /**
-     * Generate license key for specific license type.
-     *
-     * @param licenseType the license type
-     * @return the generated license key
-     */
-    String generateLicenseKeyForType(LicenseType licenseType);
+
 
     /**
      * Validate license key format.
@@ -61,29 +54,26 @@ public interface LicenseGenerationService {
     boolean isLicenseKeyUnique(String licenseKey);
 
     /**
-     * Determine download limit for license type.
+     * Determine download limit for license.
      *
-     * @param licenseType the license type
      * @return the download limit (null for unlimited)
      */
-    Integer determineDownloadLimit(LicenseType licenseType);
+    Integer determineDownloadLimit();
 
     /**
-     * Determine expiration date for license type.
+     * Determine expiration date for license.
      *
-     * @param licenseType the license type
      * @param issueDate the issue date
      * @return the expiration date (null for no expiration)
      */
-    LocalDateTime determineExpirationDate(LicenseType licenseType, LocalDateTime issueDate);
+    LocalDateTime determineExpirationDate(LocalDateTime issueDate);
 
     /**
-     * Get license terms for license type.
+     * Get default license terms.
      *
-     * @param licenseType the license type
      * @return the license terms text
      */
-    String getLicenseTermsForType(LicenseType licenseType);
+    String getLicenseTerms();
 
     /**
      * Prepare license data for order item.
@@ -152,8 +142,7 @@ public interface LicenseGenerationService {
     /**
      * Get default license configuration.
      *
-     * @param licenseType the license type
      * @return the license configuration (DTO placeholder)
      */
-    Object getDefaultLicenseConfiguration(LicenseType licenseType);
+    Object getDefaultLicenseConfiguration();
 }

@@ -61,11 +61,11 @@ public interface PhotoService {
      * Update photo pricing.
      *
      * @param photoId the photo ID
-     * @param pricingUpdateDto the pricing update data
+     * @param basePrice the new base price
      * @return the updated photo response DTO
-     * @throws IllegalArgumentException if photo not found or prices invalid
+     * @throws IllegalArgumentException if photo not found or price invalid
      */
-    PhotoResponseDto updatePhotoPricing(Long photoId, PhotoPricingUpdateDto pricingUpdateDto);
+    PhotoResponseDto updatePhotoPricing(Long photoId, BigDecimal basePrice);
 
     /**
      * Update photo EXIF data.

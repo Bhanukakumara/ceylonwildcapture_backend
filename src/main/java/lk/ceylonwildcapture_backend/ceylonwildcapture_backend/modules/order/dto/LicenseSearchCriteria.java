@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +20,6 @@ public class LicenseSearchCriteria {
     private Long userId;
     private Long photoId;
     private Long photographerId;
-    private LicenseType licenseType;
     private Boolean isActive;
     private Boolean isExpired;
 

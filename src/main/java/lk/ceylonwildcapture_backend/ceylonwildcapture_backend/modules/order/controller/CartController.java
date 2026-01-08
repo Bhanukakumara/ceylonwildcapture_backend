@@ -1,7 +1,6 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.controller;
 
 import jakarta.validation.Valid;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.AddToCartRequestDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.CartService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
@@ -38,7 +37,7 @@ public class CartController {
             Authentication authentication) {
         try {
             Long userId = getUserIdFromAuth(authentication);
-            Object cartItem = cartService.addToCart(userId, request.getPhotoId(), request.getLicenseType());
+            Object cartItem = cartService.addToCart(userId, request.getPhotoId());
             return ResponseEntity.status(HttpStatus.CREATED).body(cartItem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -57,22 +56,7 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Update cart item license type
-     */
-    @PutMapping("/items/{cartItemId}/license")
-    public ResponseEntity<?> updateLicenseType(
-            @PathVariable Long cartItemId,
-            @RequestParam LicenseType licenseType,
-            Authentication authentication) {
-        try {
-            Long userId = getUserIdFromAuth(authentication);
-            Object updatedItem = cartService.updateCartItemLicenseType(userId, cartItemId, licenseType);
-            return ResponseEntity.ok(updatedItem);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+
 
     /**
      * Get cart item count

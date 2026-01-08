@@ -72,15 +72,6 @@ public class Photo {
     @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    @Column(name = "commercial_price", precision = 10, scale = 2)
-    private BigDecimal commercialPrice;
-
-    @Column(name = "editorial_price", precision = 10, scale = 2)
-    private BigDecimal editorialPrice;
-
-    @Column(name = "extended_price", precision = 10, scale = 2)
-    private BigDecimal extendedPrice;
-
     @Column(name = "is_approved", nullable = false)
     @Builder.Default
     private Boolean isApproved = false;

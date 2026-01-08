@@ -1,7 +1,7 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +29,6 @@ public class LicenseResponseDto {
     private String photoThumbnailUrl;
     private Long photographerId;
     private String photographerName;
-    private LicenseType licenseType;
     private String issuedTo;
     private String issuedEmail;
     private Integer downloadLimit;

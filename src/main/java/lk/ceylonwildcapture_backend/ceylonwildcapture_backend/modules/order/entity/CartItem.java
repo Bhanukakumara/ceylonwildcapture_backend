@@ -3,7 +3,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.ent
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Photo;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lombok.AllArgsConstructor;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cart_items", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "photo_id", "license_type" })
+        @UniqueConstraint(columnNames = { "user_id", "photo_id" })
 })
 @Data
 @Builder
@@ -41,10 +40,6 @@ public class CartItem {
     @JoinColumn(name = "photo_id", nullable = false)
     private Photo photo;
 
-    @NotNull(message = "License type is required")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "license_type", nullable = false, length = 20)
-    private LicenseType licenseType;
 
     @NotNull(message = "Price is required")
     @Column(nullable = false, precision = 10, scale = 2)
@@ -61,21 +56,8 @@ public class CartItem {
     @PrePersist
     @PreUpdate
     public void calculatePrice() {
-        if (photo != null && licenseType != null) {
+        if (photo != null) {
             this.price = photo.getBasePrice();
-            // Apply license type multiplier
-            switch (licenseType) {
-                case COMMERCIAL:
-                    this.price = this.price.multiply(BigDecimal.valueOf(2.0));
-                    break;
-                case EXTENDED:
-                    this.price = this.price.multiply(BigDecimal.valueOf(5.0));
-                    break;
-                case PERSONAL:
-                default:
-                    // Base price for personal use
-                    break;
-            }
         }
     }
 }

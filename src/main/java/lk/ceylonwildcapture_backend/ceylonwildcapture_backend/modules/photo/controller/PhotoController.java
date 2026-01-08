@@ -75,8 +75,8 @@ public class PhotoController {
     @PatchMapping("/{id}/pricing")
     public ResponseEntity<PhotoResponseDto> updatePricing(
             @PathVariable("id") Long id,
-            @Valid @RequestBody PhotoPricingUpdateDto pricingUpdateDto) {
-        return ResponseEntity.ok(photoService.updatePhotoPricing(id, pricingUpdateDto));
+            @RequestParam("basePrice") @NotNull BigDecimal basePrice) {
+        return ResponseEntity.ok(photoService.updatePhotoPricing(id, basePrice));
     }
 
     // ------------------------------

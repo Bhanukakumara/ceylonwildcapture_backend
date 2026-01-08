@@ -15,6 +15,8 @@ import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.serv
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.service.PhotoService;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.entity.User;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.user.repository.UserRepository;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.admin.service.AuditLogService;
+import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.service.DownloadAuditService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -43,6 +45,10 @@ public class PhotoServiceImpl implements PhotoService {
     private final Cloudinary cloudinary;
     @Autowired(required = false)
     private FileStorageService fileStorageService;
+    @Autowired(required = false)
+    private AuditLogService auditLogService;
+    @Autowired(required = false)
+    private DownloadAuditService downloadAuditService;
 
     private static final String ERR_PHOTO_NOT_FOUND = "Photo not found: ";
     private static final String ERR_USER_NOT_FOUND = "User not found: ";
@@ -153,6 +159,19 @@ public class PhotoServiceImpl implements PhotoService {
         Photo saved = photoRepository.save(photo);
         log.info("Photo uploaded successfully with ID: {}, pending approval", saved.getId());
 
+        // Create audit log
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_UPLOAD",
+                "PHOTO",
+                saved.getId(),
+                photographer.getId(),
+                "CREATE",
+                String.format("Photo '%s' uploaded by %s", saved.getTitle(), photographer.getUsername()),
+                null
+            );
+        }
+
         return PhotoResponseDto.fromEntity(saved);
     }
 
@@ -184,6 +203,20 @@ public class PhotoServiceImpl implements PhotoService {
 
         Photo updated = photoRepository.save(existing);
         log.info("Photo updated successfully with ID: {}", updated.getId());
+
+        // Create audit log
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_UPDATE",
+                "PHOTO",
+                updated.getId(),
+                updated.getPhotographer().getId(),
+                "UPDATE",
+                String.format("Photo '%s' updated", updated.getTitle()),
+                null
+            );
+        }
+
         return PhotoResponseDto.fromEntity(updated);
     }
 
@@ -210,25 +243,14 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     @Override
-    public PhotoResponseDto updatePhotoPricing(Long photoId, PhotoPricingUpdateDto pricingUpdateDto) {
+    public PhotoResponseDto updatePhotoPricing(Long photoId, BigDecimal basePrice) {
         log.info("Updating pricing for photo ID: {}", photoId);
-        Objects.requireNonNull(pricingUpdateDto, "PhotoPricingUpdateDto must not be null");
+        Objects.requireNonNull(basePrice, "Base price must not be null");
 
         Photo existing = photoRepository.findById(photoId)
                 .orElseThrow(() -> new IllegalArgumentException(ERR_PHOTO_NOT_FOUND + photoId));
 
-        if (pricingUpdateDto.getBasePrice() != null) {
-            existing.setBasePrice(pricingUpdateDto.getBasePrice());
-        }
-        if (pricingUpdateDto.getCommercialPrice() != null) {
-            existing.setCommercialPrice(pricingUpdateDto.getCommercialPrice());
-        }
-        if (pricingUpdateDto.getEditorialPrice() != null) {
-            existing.setEditorialPrice(pricingUpdateDto.getEditorialPrice());
-        }
-        if (pricingUpdateDto.getExtendedPrice() != null) {
-            existing.setExtendedPrice(pricingUpdateDto.getExtendedPrice());
-        }
+        existing.setBasePrice(basePrice);
 
         Photo updated = photoRepository.save(existing);
         return PhotoResponseDto.fromEntity(updated);
@@ -355,6 +377,19 @@ public class PhotoServiceImpl implements PhotoService {
 
         photoRepository.delete(photo);
         log.info("Photo deleted successfully with ID: {}", photoId);
+
+        // Create audit log
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_DELETE",
+                "PHOTO",
+                photoId,
+                photo.getPhotographer().getId(),
+                "DELETE",
+                String.format("Photo '%s' deleted", photo.getTitle()),
+                null
+            );
+        }
     }
 
     @Override
@@ -387,6 +422,20 @@ public class PhotoServiceImpl implements PhotoService {
 
         photo.setIsApproved(true);
         Photo updated = photoRepository.save(photo);
+
+        // Create audit log
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_APPROVE",
+                "PHOTO",
+                photoId,
+                photo.getPhotographer().getId(),
+                "APPROVE",
+                String.format("Photo '%s' approved", photo.getTitle()),
+                null
+            );
+        }
+
         return PhotoResponseDto.fromEntity(updated);
     }
 
@@ -399,6 +448,20 @@ public class PhotoServiceImpl implements PhotoService {
         photo.setIsApproved(false);
         photo.setIsActive(false);
         Photo updated = photoRepository.save(photo);
+
+        // Create audit log
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_REJECT",
+                "PHOTO",
+                photoId,
+                photo.getPhotographer().getId(),
+                "REJECT",
+                String.format("Photo '%s' rejected: %s", photo.getTitle(), reason),
+                null
+            );
+        }
+
         return PhotoResponseDto.fromEntity(updated);
     }
 
@@ -531,6 +594,20 @@ public class PhotoServiceImpl implements PhotoService {
 
         photo.setDownloadCount(photo.getDownloadCount() + 1);
         Photo updated = photoRepository.save(photo);
+
+        // Create audit log for download
+        if (auditLogService != null) {
+            auditLogService.createAuditLog(
+                "PHOTO_DOWNLOAD",
+                "PHOTO",
+                photoId,
+                photo.getPhotographer().getId(),
+                "DOWNLOAD",
+                String.format("Photo '%s' downloaded", photo.getTitle()),
+                null
+            );
+        }
+
         return PhotoResponseDto.fromEntitySimple(updated);
     }
 
@@ -723,9 +800,6 @@ public class PhotoServiceImpl implements PhotoService {
                 .description(dto.getDescription())
                 .photographer(photographer)
                 .basePrice(dto.getBasePrice())
-                .commercialPrice(dto.getCommercialPrice())
-                .editorialPrice(dto.getEditorialPrice())
-                .extendedPrice(dto.getExtendedPrice())
                 .location(dto.getLocation())
                 .cameraModel(dto.getCameraModel())
                 .lens(dto.getLens())
@@ -775,15 +849,6 @@ public class PhotoServiceImpl implements PhotoService {
         if (dto.getBasePrice() != null) {
             photo.setBasePrice(dto.getBasePrice());
         }
-        if (dto.getCommercialPrice() != null) {
-            photo.setCommercialPrice(dto.getCommercialPrice());
-        }
-        if (dto.getEditorialPrice() != null) {
-            photo.setEditorialPrice(dto.getEditorialPrice());
-        }
-        if (dto.getExtendedPrice() != null) {
-            photo.setExtendedPrice(dto.getExtendedPrice());
-        }
         if (dto.getLocation() != null) {
             photo.setLocation(dto.getLocation());
         }
@@ -792,6 +857,29 @@ public class PhotoServiceImpl implements PhotoService {
         }
         if (dto.getIsFeatured() != null) {
             photo.setIsFeatured(dto.getIsFeatured());
+        }
+
+        // Update EXIF data
+        if (dto.getCameraModel() != null) {
+            photo.setCameraModel(dto.getCameraModel());
+        }
+        if (dto.getLens() != null) {
+            photo.setLens(dto.getLens());
+        }
+        if (dto.getFocalLength() != null) {
+            photo.setFocalLength(dto.getFocalLength());
+        }
+        if (dto.getAperture() != null) {
+            photo.setAperture(dto.getAperture());
+        }
+        if (dto.getShutterSpeed() != null) {
+            photo.setShutterSpeed(dto.getShutterSpeed());
+        }
+        if (dto.getIso() != null) {
+            photo.setIso(dto.getIso());
+        }
+        if (dto.getCaptureDate() != null) {
+            photo.setCaptureDate(parseDateTime(dto.getCaptureDate()));
         }
 
         // Update tags

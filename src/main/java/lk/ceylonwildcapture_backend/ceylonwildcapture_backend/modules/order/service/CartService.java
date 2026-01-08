@@ -1,7 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -17,11 +15,10 @@ public interface CartService {
      *
      * @param userId the user ID
      * @param photoId the photo ID
-     * @param licenseType the license type
      * @return the cart item (DTO placeholder)
      * @throws IllegalArgumentException if user or photo not found
      */
-    Object addToCart(Long userId, Long photoId, LicenseType licenseType);
+    Object addToCart(Long userId, Long photoId);
 
     /**
      * Remove item from cart.
@@ -32,16 +29,6 @@ public interface CartService {
      */
     void removeFromCart(Long userId, Long cartItemId);
 
-    /**
-     * Update cart item license type.
-     *
-     * @param userId the user ID
-     * @param cartItemId the cart item ID
-     * @param licenseType the new license type
-     * @return the updated cart item (DTO placeholder)
-     * @throws IllegalArgumentException if cart item not found
-     */
-    Object updateCartItemLicenseType(Long userId, Long cartItemId, LicenseType licenseType);
 
     /**
      * Get user's cart.

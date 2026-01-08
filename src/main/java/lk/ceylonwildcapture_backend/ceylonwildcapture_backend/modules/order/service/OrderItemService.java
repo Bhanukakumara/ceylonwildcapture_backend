@@ -1,7 +1,6 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service;
 
 import jakarta.validation.Valid;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.AddItemToOrderRequestDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderItemResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderResponseDto;
@@ -35,11 +34,10 @@ public interface OrderItemService {
      *
      * @param orderId the order ID
      * @param photoId the photo ID
-     * @param licenseType the license type
      * @return the created order item
      * @throws IllegalArgumentException if order or photo not found
      */
-    OrderItem createOrderItem(Long orderId, Long photoId, LicenseType licenseType);
+    OrderItem createOrderItem(Long orderId, Long photoId);
 
     /**
      * Update order item.
@@ -85,14 +83,6 @@ public interface OrderItemService {
      */
     Page<OrderItem> getOrderItemsByPhoto(Long photoId, Pageable pageable);
 
-    /**
-     * Get order items by license type.
-     *
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of order items
-     */
-    Page<OrderItem> getOrderItemsByLicenseType(LicenseType licenseType, Pageable pageable);
 
     /**
      * Get order items by photographer.
@@ -112,14 +102,13 @@ public interface OrderItemService {
     void deleteOrderItem(Long orderItemId);
 
     /**
-     * Calculate item price with license type.
+     * Calculate item price.
      *
      * @param photoId the photo ID
-     * @param licenseType the license type
      * @return the calculated price
      * @throws IllegalArgumentException if photo not found
      */
-    BigDecimal calculateItemPrice(Long photoId, LicenseType licenseType);
+    BigDecimal calculateItemPrice(Long photoId);
 
     /**
      * Calculate photographer earnings for order item.
@@ -165,13 +154,6 @@ public interface OrderItemService {
      */
     long countSalesByPhoto(Long photoId);
 
-    /**
-     * Count order items by license type.
-     *
-     * @param licenseType the license type
-     * @return count of order items
-     */
-    long countOrderItemsByLicenseType(LicenseType licenseType);
 
     /**
      * Calculate total sales for photo.
@@ -213,13 +195,6 @@ public interface OrderItemService {
      */
     Page<Object[]> getBestSellingPhotos(Pageable pageable);
 
-    /**
-     * Get most popular license types.
-     *
-     * @param pageable pagination information
-     * @return page of license types with counts
-     */
-    Page<Object[]> getMostPopularLicenseTypes(Pageable pageable);
 
     /**
      * Check if buyer has purchased photo.
@@ -244,13 +219,6 @@ public interface OrderItemService {
             LocalDateTime endDate
     );
 
-    /**
-     * Calculate average price by license type.
-     *
-     * @param licenseType the license type
-     * @return average price
-     */
-    BigDecimal calculateAveragePriceByLicenseType(LicenseType licenseType);
 
     /**
      * Get order items with discounts.

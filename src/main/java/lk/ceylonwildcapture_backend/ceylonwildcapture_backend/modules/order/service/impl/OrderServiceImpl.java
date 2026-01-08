@@ -260,7 +260,6 @@ public class OrderServiceImpl implements OrderService {
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .photo(photo)
-                    .licenseType(itemReq.getLicenseType())
                     .price(price)
                     .finalPrice(price)
                     .photographerEarnings(price.multiply(new BigDecimal("0.8")))
@@ -436,7 +435,6 @@ public class OrderServiceImpl implements OrderService {
                 .photographerId(item.getPhoto().getPhotographer().getId())
                 .photographerName(item.getPhoto().getPhotographer().getFirstName() + " "
                         + item.getPhoto().getPhotographer().getLastName())
-                .licenseType(item.getLicenseType())
                 .price(item.getPrice())
                 .finalPrice(item.getFinalPrice());
 

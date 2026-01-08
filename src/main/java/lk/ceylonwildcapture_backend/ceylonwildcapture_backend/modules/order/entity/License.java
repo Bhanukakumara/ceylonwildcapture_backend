@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.audit.entity.DownloadAudit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,10 +38,6 @@ public class License {
     @JsonIgnore
     private OrderItem orderItem;
 
-    @NotNull(message = "License type is required")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "license_type", nullable = false, length = 20)
-    private LicenseType licenseType;
 
     @Column(name = "issued_to", length = 200)
     private String issuedTo;

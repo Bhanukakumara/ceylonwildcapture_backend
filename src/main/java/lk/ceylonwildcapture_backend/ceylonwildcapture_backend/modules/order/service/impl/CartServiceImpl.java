@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.impl;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.CartItemResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.CartResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.CartItem;
@@ -30,7 +29,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public Object addToCart(Long userId, Long photoId, LicenseType licenseType) {
+    public Object addToCart(Long userId, Long photoId) {
         // Validate user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -40,15 +39,14 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new IllegalArgumentException("Photo not found with ID: " + photoId));
 
         // Check if item already exists
-        if (cartItemRepository.existsByUserIdAndPhotoIdAndLicenseType(userId, photoId, licenseType)) {
-            throw new IllegalArgumentException("This photo with the selected license is already in your cart");
+        if (cartItemRepository.existsByUserIdAndPhotoId(userId, photoId)) {
+            throw new IllegalArgumentException("This photo is already in your cart");
         }
 
         // Create cart item
         CartItem cartItem = CartItem.builder()
                 .user(user)
                 .photo(photo)
-                .licenseType(licenseType)
                 .build();
 
         cartItem = cartItemRepository.save(cartItem);
@@ -62,21 +60,6 @@ public class CartServiceImpl implements CartService {
         cartItemRepository.deleteByIdAndUserId(cartItemId, userId);
     }
 
-    @Override
-    @Transactional
-    public Object updateCartItemLicenseType(Long userId, Long cartItemId, LicenseType licenseType) {
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart item not found"));
-
-        if (!cartItem.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Unauthorized access to cart item");
-        }
-
-        cartItem.setLicenseType(licenseType);
-        cartItem = cartItemRepository.save(cartItem);
-
-        return mapToCartItemResponse(cartItem);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -215,7 +198,6 @@ public class CartServiceImpl implements CartService {
                 .photoThumbnailUrl(photo.getThumbnailUrl())
                 .photographerName(photographer != null ? photographer.getUsername() : "Unknown")
                 .photographerId(photographer != null ? photographer.getId() : null)
-                .licenseType(cartItem.getLicenseType())
                 .price(cartItem.getPrice())
                 .addedAt(cartItem.getCreatedAt())
                 .build();

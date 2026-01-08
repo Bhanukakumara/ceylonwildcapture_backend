@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,21 +18,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
      */
     List<CartItem> findByUserId(Long userId);
 
-    /**
-     * Find cart item by user, photo, and license type
-     */
-    Optional<CartItem> findByUserIdAndPhotoIdAndLicenseType(
-            Long userId,
-            Long photoId,
-            LicenseType licenseType);
-
-    /**
-     * Check if cart item exists
-     */
-    boolean existsByUserIdAndPhotoIdAndLicenseType(
-            Long userId,
-            Long photoId,
-            LicenseType licenseType);
 
     /**
      * Count cart items for a user

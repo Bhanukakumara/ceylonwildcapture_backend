@@ -2,7 +2,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.ser
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseVerificationResultDto;
@@ -119,14 +118,6 @@ public interface LicenseService {
      */
     Optional<License> getActiveLicenseByBuyerAndPhoto(Long buyerId, Long photoId);
 
-    /**
-     * Get licenses by license type.
-     *
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of licenses
-     */
-    Page<License> getLicensesByLicenseType(LicenseType licenseType, Pageable pageable);
 
     /**
      * Get licenses by order.
@@ -188,15 +179,6 @@ public interface LicenseService {
      */
     boolean hasValidLicense(Long buyerId, Long photoId);
 
-    /**
-     * Check if buyer has specific license type for photo.
-     *
-     * @param buyerId the buyer ID
-     * @param photoId the photo ID
-     * @param licenseType the license type
-     * @return true if buyer has the specific license type
-     */
-    boolean hasLicenseType(Long buyerId, Long photoId, LicenseType licenseType);
 
     /**
      * Record license download.
@@ -296,13 +278,6 @@ public interface LicenseService {
      */
     long countActiveLicensesByBuyer(Long buyerId);
 
-    /**
-     * Count licenses by license type.
-     *
-     * @param licenseType the license type
-     * @return count of licenses
-     */
-    long countLicensesByLicenseType(LicenseType licenseType);
 
     /**
      * Generate unique license key.
@@ -314,20 +289,10 @@ public interface LicenseService {
     /**
      * Get license terms and conditions.
      *
-     * @param licenseType the license type
      * @return the license terms text
      */
-    String getLicenseTerms(LicenseType licenseType);
+    String getLicenseTerms();
 
-    /**
-     * Get buyer's licenses by license type.
-     *
-     * @param buyerId the buyer ID
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of licenses
-     */
-    Page<License> getLicensesByBuyerAndLicenseType(Long buyerId, LicenseType licenseType, Pageable pageable);
 
     LicenseResponseDto getLicenseDto(Long licenseId, Long userId);
 

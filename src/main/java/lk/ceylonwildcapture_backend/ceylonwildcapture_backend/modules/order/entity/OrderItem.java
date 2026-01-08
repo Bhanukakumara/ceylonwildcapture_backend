@@ -3,7 +3,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.ent
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Photo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,10 +37,6 @@ public class OrderItem {
     @JsonIgnore
     private Photo photo;
 
-    @NotNull(message = "License type is required")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "license_type", nullable = false, length = 20)
-    private LicenseType licenseType;
 
     @NotNull(message = "Price is required")
     @Column(nullable = false, precision = 10, scale = 2)

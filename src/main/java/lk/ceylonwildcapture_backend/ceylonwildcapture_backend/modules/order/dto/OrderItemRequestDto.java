@@ -1,7 +1,7 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +19,4 @@ public class OrderItemRequestDto {
     @NotNull(message = "Photo ID is required")
     private Long photoId;
 
-    @NotNull(message = "License type is required")
-    private LicenseType licenseType;
 }

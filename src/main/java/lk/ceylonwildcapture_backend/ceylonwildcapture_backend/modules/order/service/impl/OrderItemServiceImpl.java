@@ -1,7 +1,6 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.impl;
 
 import jakarta.validation.Valid;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.AddItemToOrderRequestDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderItemResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.OrderResponseDto;
@@ -28,7 +27,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     }
 
     @Override
-    public OrderItem createOrderItem(Long orderId, Long photoId, LicenseType licenseType) {
+    public OrderItem createOrderItem(Long orderId, Long photoId) {
         // TODO: Implement actual business logic
         throw new UnsupportedOperationException("Not implemented yet");
     }
@@ -63,11 +62,6 @@ public class OrderItemServiceImpl implements OrderItemService {
         return new PageImpl<>(Collections.emptyList());
     }
 
-    @Override
-    public Page<OrderItem> getOrderItemsByLicenseType(LicenseType licenseType, Pageable pageable) {
-        // TODO: Implement actual business logic
-        return new PageImpl<>(Collections.emptyList());
-    }
 
     @Override
     public Page<OrderItem> getOrderItemsByPhotographer(Long photographerId, Pageable pageable) {
@@ -81,7 +75,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     }
 
     @Override
-    public BigDecimal calculateItemPrice(Long photoId, LicenseType licenseType) {
+    public BigDecimal calculateItemPrice(Long photoId) {
         // TODO: Implement actual business logic
         return BigDecimal.ZERO;
     }
@@ -116,11 +110,6 @@ public class OrderItemServiceImpl implements OrderItemService {
         return 0;
     }
 
-    @Override
-    public long countOrderItemsByLicenseType(LicenseType licenseType) {
-        // TODO: Implement actual business logic
-        return 0;
-    }
 
     @Override
     public BigDecimal calculateTotalSalesByPhoto(Long photoId) {
@@ -152,11 +141,6 @@ public class OrderItemServiceImpl implements OrderItemService {
         return new PageImpl<>(Collections.emptyList());
     }
 
-    @Override
-    public Page<Object[]> getMostPopularLicenseTypes(Pageable pageable) {
-        // TODO: Implement actual business logic
-        return new PageImpl<>(Collections.emptyList());
-    }
 
     @Override
     public boolean hasBuyerPurchasedPhoto(Long buyerId, Long photoId) {
@@ -170,11 +154,6 @@ public class OrderItemServiceImpl implements OrderItemService {
         return Collections.emptyList();
     }
 
-    @Override
-    public BigDecimal calculateAveragePriceByLicenseType(LicenseType licenseType) {
-        // TODO: Implement actual business logic
-        return BigDecimal.ZERO;
-    }
 
     @Override
     public Page<OrderItem> getOrderItemsWithDiscount(Pageable pageable) {

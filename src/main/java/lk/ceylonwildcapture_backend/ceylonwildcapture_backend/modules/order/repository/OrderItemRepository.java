@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.Order;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.OrderItem;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.photo.entity.Photo;
@@ -66,24 +65,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      */
     Page<OrderItem> findByPhotoId(Long photoId, Pageable pageable);
 
-    /**
-     * Find order items by photo and license type.
-     *
-     * @param photoId the photo ID
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of order items
-     */
-    Page<OrderItem> findByPhotoIdAndLicenseType(Long photoId, LicenseType licenseType, Pageable pageable);
 
-    /**
-     * Find order items by license type.
-     *
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of order items
-     */
-    Page<OrderItem> findByLicenseType(LicenseType licenseType, Pageable pageable);
+
+
 
     /**
      * Find order item by order and photo.
@@ -111,13 +95,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      */
     long countByPhotoId(Long photoId);
 
-    /**
-     * Count order items by license type.
-     *
-     * @param licenseType the license type
-     * @return count of order items
-     */
-    long countByLicenseType(LicenseType licenseType);
+
 
     /**
      * Calculate total sales for a photo.
@@ -175,15 +153,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
            "GROUP BY oi.photo.id ORDER BY salesCount DESC")
     Page<Object[]> findBestSellingPhotos(Pageable pageable);
 
-    /**
-     * Find most popular license types.
-     *
-     * @param pageable pagination information
-     * @return page of license types with counts
-     */
-    @Query("SELECT oi.licenseType, COUNT(oi) as count FROM OrderItem oi " +
-           "GROUP BY oi.licenseType ORDER BY count DESC")
-    Page<Object[]> findMostPopularLicenseTypes(Pageable pageable);
+
 
     /**
      * Check if buyer has purchased photo.
@@ -212,14 +182,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("endDate") java.time.LocalDateTime endDate
     );
 
-    /**
-     * Calculate average price by license type.
-     *
-     * @param licenseType the license type
-     * @return average price
-     */
-    @Query("SELECT AVG(oi.finalPrice) FROM OrderItem oi WHERE oi.licenseType = :licenseType")
-    BigDecimal calculateAveragePriceByLicenseType(@Param("licenseType") LicenseType licenseType);
+
 
     /**
      * Find order items with discount applied.

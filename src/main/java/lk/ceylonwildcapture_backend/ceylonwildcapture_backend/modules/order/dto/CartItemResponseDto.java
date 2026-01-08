@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +21,6 @@ public class CartItemResponseDto {
     private String photoThumbnailUrl;
     private String photographerName;
     private Long photographerId;
-    private LicenseType licenseType;
     private BigDecimal price;
     private LocalDateTime addedAt;
 }

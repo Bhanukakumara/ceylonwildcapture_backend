@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.impl;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.License;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.OrderItem;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.service.LicenseGenerationService;
@@ -29,11 +28,7 @@ public class LicenseGenerationServiceImpl implements LicenseGenerationService {
         return null;
     }
 
-    @Override
-    public String generateLicenseKeyForType(LicenseType licenseType) {
-        // TODO: Implement actual business logic
-        return null;
-    }
+
 
     @Override
     public boolean isValidLicenseKeyFormat(String licenseKey) {
@@ -48,19 +43,19 @@ public class LicenseGenerationServiceImpl implements LicenseGenerationService {
     }
 
     @Override
-    public Integer determineDownloadLimit(LicenseType licenseType) {
+    public Integer determineDownloadLimit() {
         // TODO: Implement actual business logic
         return null;
     }
 
     @Override
-    public LocalDateTime determineExpirationDate(LicenseType licenseType, LocalDateTime issueDate) {
+    public LocalDateTime determineExpirationDate(LocalDateTime issueDate) {
         // TODO: Implement actual business logic
         return null;
     }
 
     @Override
-    public String getLicenseTermsForType(LicenseType licenseType) {
+    public String getLicenseTerms() {
         // TODO: Implement actual business logic
         return null;
     }
@@ -114,7 +109,7 @@ public class LicenseGenerationServiceImpl implements LicenseGenerationService {
     }
 
     @Override
-    public Object getDefaultLicenseConfiguration(LicenseType licenseType) {
+    public Object getDefaultLicenseConfiguration() {
         // TODO: Implement actual business logic
         throw new UnsupportedOperationException("Not implemented yet");
     }

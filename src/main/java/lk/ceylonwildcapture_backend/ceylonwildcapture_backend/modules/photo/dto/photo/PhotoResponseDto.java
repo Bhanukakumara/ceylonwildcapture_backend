@@ -36,9 +36,6 @@ public class PhotoResponseDto {
     private Integer height;
     private String format;
     private BigDecimal basePrice;
-    private BigDecimal commercialPrice;
-    private BigDecimal editorialPrice;
-    private BigDecimal extendedPrice;
     private Boolean isApproved;
     private Boolean isFeatured;
     private Boolean isActive;
@@ -99,9 +96,6 @@ public class PhotoResponseDto {
                 .height(photo.getHeight())
                 .format(photo.getFormat())
                 .basePrice(photo.getBasePrice())
-                .commercialPrice(photo.getCommercialPrice())
-                .editorialPrice(photo.getEditorialPrice())
-                .extendedPrice(photo.getExtendedPrice())
                 .isApproved(photo.getIsApproved())
                 .isFeatured(photo.getIsFeatured())
                 .isActive(photo.getIsActive())
@@ -153,9 +147,6 @@ public class PhotoResponseDto {
                 .height(photo.getHeight())
                 .format(photo.getFormat())
                 .basePrice(photo.getBasePrice())
-                .commercialPrice(photo.getCommercialPrice())
-                .editorialPrice(photo.getEditorialPrice())
-                .extendedPrice(photo.getExtendedPrice())
                 .isApproved(photo.getIsApproved())
                 .isFeatured(photo.getIsFeatured())
                 .isActive(photo.getIsActive())

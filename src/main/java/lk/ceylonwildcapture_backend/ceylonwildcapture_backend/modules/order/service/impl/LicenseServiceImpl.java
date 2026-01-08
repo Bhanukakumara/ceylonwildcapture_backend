@@ -2,7 +2,6 @@ package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.ser
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseResponseDto;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseSearchCriteria;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.dto.LicenseVerificationResultDto;
@@ -88,11 +87,6 @@ public class LicenseServiceImpl implements LicenseService {
         return Optional.empty();
     }
 
-    @Override
-    public Page<License> getLicensesByLicenseType(LicenseType licenseType, Pageable pageable) {
-        // TODO: Implement actual business logic
-        return new PageImpl<>(Collections.emptyList());
-    }
 
     @Override
     public List<License> getLicensesByOrder(Long orderId) {
@@ -135,11 +129,6 @@ public class LicenseServiceImpl implements LicenseService {
         return false;
     }
 
-    @Override
-    public boolean hasLicenseType(Long buyerId, Long photoId, LicenseType licenseType) {
-        // TODO: Implement actual business logic
-        return false;
-    }
 
     @Override
     public License recordDownload(Long licenseId) {
@@ -213,11 +202,6 @@ public class LicenseServiceImpl implements LicenseService {
         return 0;
     }
 
-    @Override
-    public long countLicensesByLicenseType(LicenseType licenseType) {
-        // TODO: Implement actual business logic
-        return 0;
-    }
 
     @Override
     public String generateLicenseKey() {
@@ -226,16 +210,11 @@ public class LicenseServiceImpl implements LicenseService {
     }
 
     @Override
-    public String getLicenseTerms(LicenseType licenseType) {
+    public String getLicenseTerms() {
         // TODO: Implement actual business logic
         return null;
     }
 
-    @Override
-    public Page<License> getLicensesByBuyerAndLicenseType(Long buyerId, LicenseType licenseType, Pageable pageable) {
-        // TODO: Implement actual business logic
-        return new PageImpl<>(Collections.emptyList());
-    }
 
     @Override
     public LicenseResponseDto getLicenseDto(Long licenseId, Long userId) {

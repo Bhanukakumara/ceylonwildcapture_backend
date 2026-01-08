@@ -1,6 +1,5 @@
 package lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.repository;
 
-import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.common.enums.LicenseType;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.License;
 import lk.ceylonwildcapture_backend.ceylonwildcapture_backend.modules.order.entity.OrderItem;
 import org.springframework.data.domain.Page;
@@ -109,29 +108,9 @@ public interface LicenseRepository extends JpaRepository<License, Long> {
                            @Param("photoId") Long photoId,
                            @Param("isActive") Boolean isActive);
 
-    /**
-     * Check if buyer has license with specific license type for photo.
-     *
-     * @param buyerId the buyer ID
-     * @param photoId the photo ID
-     * @param licenseType the license type
-     * @return true if buyer has the specific license type
-     */
-    @Query("SELECT COUNT(l) > 0 FROM License l WHERE l.orderItem.order.buyer.id = :buyerId " +
-           "AND l.orderItem.photo.id = :photoId AND l.licenseType = :licenseType " +
-           "AND l.isActive = true AND (l.expiresAt IS NULL OR l.expiresAt > CURRENT_TIMESTAMP)")
-    boolean hasLicenseType(@Param("buyerId") Long buyerId,
-                          @Param("photoId") Long photoId,
-                          @Param("licenseType") LicenseType licenseType);
 
-    /**
-     * Find licenses by license type.
-     *
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of licenses
-     */
-    Page<License> findByLicenseType(LicenseType licenseType, Pageable pageable);
+
+
 
     /**
      * Find licenses by active status.
@@ -208,13 +187,7 @@ public interface LicenseRepository extends JpaRepository<License, Long> {
     @Query("SELECT COUNT(l) FROM License l WHERE l.orderItem.order.buyer.id = :buyerId AND l.isActive = :isActive")
     long countByBuyerIdAndIsActive(@Param("buyerId") Long buyerId, @Param("isActive") Boolean isActive);
 
-    /**
-     * Count licenses by license type.
-     *
-     * @param licenseType the license type
-     * @return count of licenses
-     */
-    long countByLicenseType(LicenseType licenseType);
+
 
     /**
      * Check if license key exists.
@@ -259,16 +232,5 @@ public interface LicenseRepository extends JpaRepository<License, Long> {
      */
     Page<License> findAllByOrderByDownloadCountDesc(Pageable pageable);
 
-    /**
-     * Find licenses by buyer and license type.
-     *
-     * @param buyerId the buyer ID
-     * @param licenseType the license type
-     * @param pageable pagination information
-     * @return page of licenses
-     */
-    @Query("SELECT l FROM License l WHERE l.orderItem.order.buyer.id = :buyerId AND l.licenseType = :licenseType")
-    Page<License> findByBuyerIdAndLicenseType(@Param("buyerId") Long buyerId,
-                                               @Param("licenseType") LicenseType licenseType,
-                                               Pageable pageable);
+
 }
